@@ -1,7 +1,7 @@
 
 services:
   base:
-    image: symfonymick-dev_gd-imagick
+    image: symfonymick-dev_gd-imagick-pdo_pgsql
     container_name: base
     volumes:
       - .:/app
