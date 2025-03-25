@@ -1,5 +1,14 @@
 import { Controller } from '@hotwired/stimulus';
-import Swal from 'sweetalert2';
+import { Notyf } from 'notyf';
+const notyf = new Notyf(
+    {
+        duration: 2000,
+        position: {
+            x: 'right',
+            y: 'top',
+        }
+    }
+);
 
 export default class extends Controller {
     static targets = ["content"];
@@ -33,22 +42,12 @@ export default class extends Controller {
 
         let result = await response.json();
         if (!result.success) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Erreur lors de la mise à jour'
-            });
+            notyf.error('Erreur lors de la mise à jour du champ');
+
         }
         else {
-            Swal.fire({
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 1500,
-                icon: 'success',
-                text: 'Mise à jour réussie',
-                width: 'auto',
-                padding: '0.5em'
-            });
+            notyf.success('Champ mis à jour');
+
         }
 
     }
@@ -80,11 +79,7 @@ export default class extends Controller {
         if (result.success) {
             event.currentTarget.closest("tr").remove();
         } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Erreur lors de la suppression'
-            });
+            notyf.error('Erreur lors de la suppression de l\'élément');
         }
     }
 

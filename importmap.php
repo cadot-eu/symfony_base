@@ -38,4 +38,7 @@ return [
     'sweetalert2' => [
         'version' => '11.17.2',
     ],
+    'notyf' => [
+        'version' => '3.10.0',
+    ],
 ];
