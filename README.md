@@ -15,6 +15,7 @@
 - supprimer le .git
 - git init
 - modifier .env.test (entre '') et .env.dev (sans '') en mettant des secrets (différents)
+- sc d:f:l: -n pour installer un user a@aa.aa avec * comme admin
 
 ## utilisation des scripts de debs
 

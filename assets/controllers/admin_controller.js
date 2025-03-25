@@ -39,6 +39,14 @@ export default class extends Controller {
                 text: 'Erreur lors de la mise à jour'
             });
         }
+        else {
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès',
+                text: 'Mise à jour réussie'
+            });
+        }
+
     }
     async deleteEntity(event) {
         let confirmDelete = await Swal.fire({

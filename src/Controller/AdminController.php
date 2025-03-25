@@ -63,27 +63,7 @@ class AdminController extends AbstractController
 
         return new JsonResponse(['success' => true]);
     }
-    #[Route('/creer', name: 'create_Entitie', methods: ['POST'])]
-    public function createEntitie(Request $request, EntityManagerInterface $em): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
 
-        if (!$data || !isset($data['entity'])) {
-            return new JsonResponse(['error' => 'Invalid data'], 400);
-        }
-
-        $entityClass = 'App\\Entity\\' . ucfirst($data['entity']);
-        try {
-            $entity = new $entityClass();
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => 'Entity class not found or not instantiable'], 400);
-        }
-
-        $em->persist($entity);
-        $em->flush();
-
-        return new JsonResponse(['success' => true]);
-    }
     #[Route('/entities/{entity}', name: 'list_entities', methods: ['GET'])]
     public function listEntities(string $entity, EntityManagerInterface $em): Response
     {
