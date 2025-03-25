@@ -5,9 +5,9 @@ services:
     container_name: base
     volumes:
       - .:/app
-      - ./docker/logs/nginx:/var/log/nginx
-      - ./docker/logs/php-fpm:/var/log/php-fpm
-      - ./docker/logs/supervisor:/var/log/supervisor
+      - ./var/log/nginx:/var/log/nginx
+      - ./var/log/php-fpm:/var/log/php-fpm
+      - ./var/log/supervisor:/var/log/supervisor
     restart: always
     ports:
       - 23407:80
