@@ -35,4 +35,7 @@ return [
         'version' => '5.3.3',
         'type' => 'css',
     ],
+    'sweetalert2' => [
+        'version' => '11.17.2',
+    ],
 ];

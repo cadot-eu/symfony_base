@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import Swal from 'sweetalert2';
 
 export default class extends Controller {
     static targets = ["content"];
@@ -32,11 +33,25 @@ export default class extends Controller {
 
         let result = await response.json();
         if (!result.success) {
-            alert("Erreur lors de la mise à jour");
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Erreur lors de la mise à jour'
+            });
         }
     }
     async deleteEntity(event) {
-        if (!confirm("Voulez-vous vraiment supprimer cet élément ?")) {
+        let confirmDelete = await Swal.fire({
+            title: 'Suppression',
+            text: 'Voulez-vous vraiment supprimer cet élément ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Oui, supprimer'
+        });
+
+        if (!confirmDelete.isConfirmed) {
             return;
         }
 
@@ -53,22 +68,13 @@ export default class extends Controller {
         if (result.success) {
             event.currentTarget.closest("tr").remove();
         } else {
-            alert("Erreur lors de la suppression");
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Erreur lors de la suppression'
+            });
         }
     }
-    async CreateEntity(event) {
-        let entity = event.currentTarget.dataset.entity;
-        let response = await fetch('/admin/creer', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ entity })
-        });
 
-        let result = await response.json();
-        if (!result.success) {
-            alert("Erreur lors de la création");
-        }
-
-    }
 
 }
