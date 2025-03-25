@@ -56,5 +56,19 @@ export default class extends Controller {
             alert("Erreur lors de la suppression");
         }
     }
+    async CreateEntity(event) {
+        let entity = event.currentTarget.dataset.entity;
+        let response = await fetch('/admin/creer', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ entity })
+        });
+
+        let result = await response.json();
+        if (!result.success) {
+            alert("Erreur lors de la création");
+        }
+
+    }
 
 }

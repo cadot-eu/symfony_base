@@ -1,12 +1,15 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
-    secret: '%env(APP_SECRET)%'
+    secret: "%env(APP_SECRET)%"
 
     # Note that the session will be started ONLY if you read or write from it.
     session: true
-
-    #esi: true
-    #fragments: true
+    csrf_protection: ~
+    http_method_override: true # Mettre  true  pour autoriser HTTP methods override (par exemple, pour mettre  PUT  ou  DELETE  dans un formulaire)
+    handle_all_throwables: true # Utilit  : si une erreur est déclench e dans un contrôleur, le contrôleur d'exception de Symfony la gère automatiquement.
+    trusted_proxies: TRUSTED_PROXIES=127.0.0.1,REMOTE_ADDR #erreur cors
+    #esi: true # Utilit  : permet de récupérer du contenu statique (par exemple, des fragments de page)
+    #fragments: true # Utilit  : permet de stocker des fragments de page en cache (par exemple, des parties de page qui ne changent pas souvent).
 
 when@test:
     framework:

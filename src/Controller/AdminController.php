@@ -3,7 +3,6 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -11,20 +10,30 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use ReflectionClass;
 
 #[Route('/admin', name: 'admin_')]
 #[IsGranted('ROLE_ADMIN')]
 class AdminController extends AbstractController
 {
-    public function __construct()
-    {
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-    }
+
 
     #[Route('/', name: 'dashboard')]
-    public function index(): Response
+    public function index(EntityManagerInterface $em): Response
     {
-        return $this->render('admin/dashboard.html.twig');
+        //on récupères les noms des entitées
+        $entityClasses = [];
+        $metaData = $em->getMetadataFactory()->getAllMetadata();
+        foreach ($metaData as $meta) {
+            $entityClasses[] = $meta->getName();
+        }
+        $entities = array_map(function ($className) {
+            return (new ReflectionClass($className))->getShortName();
+        }, $entityClasses);
+        return $this->render(
+            'admin/dashboard.html.twig',
+            ['entities' => $entities]
+        );
     }
 
     #[Route('/update', name: 'update_field', methods: ['POST'])]
@@ -54,6 +63,27 @@ class AdminController extends AbstractController
 
         return new JsonResponse(['success' => true]);
     }
+    #[Route('/creer', name: 'create_Entitie', methods: ['POST'])]
+    public function createEntitie(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (!$data || !isset($data['entity'])) {
+            return new JsonResponse(['error' => 'Invalid data'], 400);
+        }
+
+        $entityClass = 'App\\Entity\\' . ucfirst($data['entity']);
+        try {
+            $entity = new $entityClass();
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'Entity class not found or not instantiable'], 400);
+        }
+
+        $em->persist($entity);
+        $em->flush();
+
+        return new JsonResponse(['success' => true]);
+    }
     #[Route('/entities/{entity}', name: 'list_entities', methods: ['GET'])]
     public function listEntities(string $entity, EntityManagerInterface $em): Response
     {
@@ -65,7 +95,6 @@ class AdminController extends AbstractController
 
         $repository = $em->getRepository($entityClass);
         $objects = $repository->findAll();
-
         return $this->render('admin/entity_list.html.twig', [
             'objects' => $objects,
             'entity' => $entity

@@ -1,8 +1,18 @@
+{% if (objects[0].fieldsCrud)|default == ''  %}
+	<div class="alert alert-warning" role="alert">
+		L'entité n'a pas de méthode fieldsCrud.
+	</div>
+{% endif %}
+
 <table class="table table-striped">
 	<thead>
 		<tr>
 			<th>ID</th>
-			{% for field in objects[0] | keys %}
+			{% for field in objects[0].fieldsCrud|default %}
+				{% if field|slice(-1) == '*' %}
+					{% set modification = true %}
+					{% set field = field|slice(0, -1) %}
+				{% endif %}
 				<th>{{ field }}</th>
 			{% endfor %}
 			<th>Actions</th>
@@ -12,10 +22,20 @@
 		{% for object in objects %}
 			<tr>
 				<td>{{ object.id }}</td>
-				{% for field, value in object | raw %}
-					<td contenteditable="true" data-entity="{{ entity }}" data-field="{{ field }}" data-id="{{ object.id }}" data-action="blur->admin#updateField">
-						{{ value }}
-					</td>
+
+				{% for field in objects[0].fieldsCrud|default %}
+					{% set champ=field %}
+					{% if field|slice(-1) == '*' %}
+						{% set champ = field|slice(0, -1) %}
+						<td contenteditable="true" data-entity="{{ entity }}" data-field="{{ champ }}" data-id="{{ object.id }}" data-action="blur->admin#updateField">
+							{{  attribute(object, champ) }}
+						</td>
+					{% else %}
+						<td>
+							{{  attribute(object, champ) }}
+						</td>
+					{% endif %}
+
 				{% endfor %}
 				<td>
 					<button class="btn btn-danger btn-sm" data-entity="{{ entity }}" data-id="{{ object.id }}" data-action="click->admin#deleteEntity">Supprimer</button>
