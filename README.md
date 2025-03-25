@@ -1,12 +1,22 @@
-# Installation
+# Symfony Base
+
+- Base pour déployer une application symfony webapp avec mini dashboard admin automatique.
+- Stimulus & Controller pour modification en directe
+
+## Installation
 
 - git clone
 - lancer ./updateFiles.sh (il va mettre pour vous à jour les fichiers
 
-# Lancement
+## Lancement
 
 - dc up -d
 - caddy run
 - supprimer le .git
 - git init
 - modifier .env.test (entre '') et .env.dev (sans '') en mettant des secrets (différents)
+
+## utilisation des scripts de debs
+
+- dsh: entrer dans le docker
+- dlogs: voir les logs
