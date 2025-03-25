@@ -45,7 +45,9 @@ export default class extends Controller {
                 showConfirmButton: false,
                 timer: 1500,
                 icon: 'success',
-                text: 'Mise à jour réussie'
+                text: 'Mise à jour réussie',
+                width: 'auto',
+                padding: '0.5em'
             });
         }
 
