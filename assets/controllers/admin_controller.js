@@ -41,8 +41,10 @@ export default class extends Controller {
         }
         else {
             Swal.fire({
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 1500,
                 icon: 'success',
-                title: 'Succès',
                 text: 'Mise à jour réussie'
             });
         }
