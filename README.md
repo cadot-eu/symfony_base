@@ -10,3 +10,4 @@
 - caddy run
 - supprimer le .git
 - git init
+- modifier .env.test (entre '') et .env.dev (sans '') en mettant des secrets (différents)
