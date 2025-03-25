@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Dashboard
+{% endblock %}
+
+{% block body %}
+	{{ stimulus_controller('admin') }}
+
+	<div class="container-fluid">
+		<div
+			class="row">
+			<!-- Sidebar -->
+			<nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+				<div class="position-sticky">
+					<ul class="nav flex-column">
+						{% for entity in entities %}
+							<li class="nav-item">
+								<a class="nav-link" href="#" data-entity="{{ entity }}">{{ entity }}</a>
+							</li>
+						{% endfor %}
+					</ul>
+				</div>
+			</nav>
+
+			<!-- Content -->
+			<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+				<h2>Liste des objets</h2>
+				<div
+					id="entity-content"><!-- Le contenu sera chargé ici dynamiquement -->
+				</div>
+			</main>
+		</div>
+	</div>
+
+{% endblock %}

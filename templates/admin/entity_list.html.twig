@@ -1,0 +1,26 @@
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>ID</th>
+			{% for field in objects[0] | keys %}
+				<th>{{ field }}</th>
+			{% endfor %}
+			<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for object in objects %}
+			<tr>
+				<td>{{ object.id }}</td>
+				{% for field, value in object | raw %}
+					<td contenteditable="true" data-entity="{{ entity }}" data-field="{{ field }}" data-id="{{ object.id }}" data-action="blur->admin#updateField">
+						{{ value }}
+					</td>
+				{% endfor %}
+				<td>
+					<button class="btn btn-danger btn-sm" data-entity="{{ entity }}" data-id="{{ object.id }}" data-action="click->admin#deleteEntity">Supprimer</button>
+				</td>
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>

@@ -1,0 +1,10 @@
+services:
+  base:
+    image: symfonymick-dev_imagick
+    container_name: base
+    volumes:
+      - .:/app
+    restart: always
+    ports:
+      - 80
+ 
