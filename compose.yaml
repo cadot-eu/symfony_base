@@ -10,6 +10,7 @@ services:
       - 23407:80
 ###> doctrine/doctrine-bundle ###
   database:
+    container_name: base-db
     image: postgres:${POSTGRES_VERSION:-16}-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-app}
