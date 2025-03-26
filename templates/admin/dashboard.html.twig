@@ -26,10 +26,11 @@
 				<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 					<h2>Liste des objets</h2>
 
-
-					<turbo-frame id="the_frame_id">
-						{{include('/admin/entity_list.html.twig')}}
-					</turbo-frame>
+					{% if entity is defined %}
+						<turbo-frame id="the_frame_id">
+							{{include('/admin/entity_list.html.twig')}}
+						</turbo-frame>
+					{% endif %}
 
 
 				</main>
