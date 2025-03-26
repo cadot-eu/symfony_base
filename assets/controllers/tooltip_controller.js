@@ -7,10 +7,11 @@ export default class extends Controller {
     }
 
     connect() {
-        // Créer l'élément modal dynamiquement
-        this.modalElement = document.createElement('div');
-        this.modalElement.classList.add('modal', 'fade');
-        this.modalElement.innerHTML = `
+        if (this.htmlValue) {
+            // Créer l'élément modal dynamiquement
+            this.modalElement = document.createElement('div');
+            this.modalElement.classList.add('modal', 'fade');
+            this.modalElement.innerHTML = `
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-body">
@@ -19,18 +20,18 @@ export default class extends Controller {
         </div>
       </div>
     `;
-        document.body.appendChild(this.modalElement);
+            document.body.appendChild(this.modalElement);
 
-        // Initialiser le modal Bootstrap
-        this.bootstrapModal = new Modal(this.modalElement);
+            // Initialiser le modal Bootstrap
+            this.bootstrapModal = new Modal(this.modalElement);
 
-        // Ajouter l'événement de survol
-        this.element.addEventListener('mouseover', () => {
-            this.bootstrapModal.show();
-        });
+            // Ajouter l'événement de survol
+            this.element.addEventListener('mouseover', () => {
+                this.bootstrapModal.show();
+            });
 
+        }
     }
-
     // Nettoyer lors de la déconnexion du contrôleur
     disconnect() {
         if (this.modalElement) {
