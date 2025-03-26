@@ -15,7 +15,14 @@
 - supprimer le .git
 - git init
 - modifier .env.test (entre '') et .env.dev (sans '') en mettant des secrets (différents)
-- sc d:f:l: -n pour installer un user a@aa.aa avec * comme admin
+- sc d:f:l: -n pour installer un user <a@aa.aa> avec * comme admin
+
+## utilisation du Dashboard automatique
+
+- créer une méthode dans une entité fieldsCrud qui retourne un tableau de noms en minuscule des méthodes à afficher
+- options à la fin du nom:
+- - *=>la modification est possible
+- - #=>on limite l'affichage à 10 caractère et on créé un infobulle avec le texte complet
 
 ## utilisation des scripts de debs
 

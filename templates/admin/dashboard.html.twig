@@ -25,9 +25,13 @@
 				<!-- Content -->
 				<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 					<h2>Liste des objets</h2>
-					<div
-						id="entity-content" data-target="admin.content"><!-- Le contenu sera chargé ici dynamiquement -->
-					</div>
+
+
+					<turbo-frame id="the_frame_id">
+						{{include('/admin/entity_list.html.twig')}}
+					</turbo-frame>
+
+
 				</main>
 			</div>
 		</div>

@@ -22,10 +22,7 @@ export default class extends Controller {
     async loadEntity(event) {
         event.preventDefault();
         let entity = event.currentTarget.dataset.entity;
-
-        let response = await fetch(`/admin/entities/${entity}`);
-        let html = await response.text();
-        this.contentTarget.innerHTML = html;
+        Turbo.visit(`/admin/entities/${entity}`);
     }
 
     async updateField(event) {

@@ -9,8 +9,7 @@
 		<tr>
 			<th>ID</th>
 			{% for field in objects[0].fieldsCrud|default %}
-				{% if field|slice(-1) == '*' %}
-					{% set modification = true %}
+				{% if field|slice(-1) == '*' or field|slice(-1) == '#' %}
 					{% set field = field|slice(0, -1) %}
 				{% endif %}
 				<th>{{ field }}</th>
@@ -29,6 +28,11 @@
 						{% set champ = field|slice(0, -1) %}
 						<td contenteditable="true" data-entity="{{ entity }}" data-field="{{ champ }}" data-id="{{ object.id }}" data-action="blur->admin#updateField">
 							{{  attribute(object, champ) }}
+						</td>
+					{% elseif field|slice(-1) == '#' %}
+						{% set champ = field|slice(0, -1) %}
+						<td {{ stimulus_controller('tooltip',{'html':attribute(object, champ)|raw} ) }} ">
+							{{  attribute(object, champ)|slice(0, 10) }}
 						</td>
 					{% else %}
 						<td>

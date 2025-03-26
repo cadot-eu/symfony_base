@@ -16,23 +16,18 @@ use ReflectionClass;
 #[IsGranted('ROLE_ADMIN')]
 class AdminController extends AbstractController
 {
-
+    private $em;
+    public function __construct(EntityManagerInterface $em)
+    {
+        $this->em = $em;
+    }
 
     #[Route('/', name: 'dashboard')]
     public function index(EntityManagerInterface $em): Response
     {
-        //on récupères les noms des entitées
-        $entityClasses = [];
-        $metaData = $em->getMetadataFactory()->getAllMetadata();
-        foreach ($metaData as $meta) {
-            $entityClasses[] = $meta->getName();
-        }
-        $entities = array_map(function ($className) {
-            return (new ReflectionClass($className))->getShortName();
-        }, $entityClasses);
         return $this->render(
             'admin/dashboard.html.twig',
-            ['entities' => $entities]
+            ['entities' => $this->getEntitiesName()]
         );
     }
 
@@ -70,14 +65,15 @@ class AdminController extends AbstractController
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
 
         if (!class_exists($entityClass)) {
-            return new JsonResponse(['error' => 'Entity not found'], 404);
+            $this->addFlash('error', "L'entité n'existe pas.");
         }
 
         $repository = $em->getRepository($entityClass);
         $objects = $repository->findAll();
-        return $this->render('admin/entity_list.html.twig', [
+        return $this->render('admin/dashboard.html.twig', [
             'objects' => $objects,
-            'entity' => $entity
+            'entity' => $entity,
+            'entities' => $this->getEntitiesName()
         ]);
     }
     #[Route('/delete', name: 'delete_entity', methods: ['POST'])]
@@ -100,5 +96,17 @@ class AdminController extends AbstractController
         $em->flush();
 
         return new JsonResponse(['success' => true]);
+    }
+    private function getEntitiesName()
+    {
+        //on récupères les noms des entitées
+        $entityClasses = [];
+        $metaData = $this->em->getMetadataFactory()->getAllMetadata();
+        foreach ($metaData as $meta) {
+            $entityClasses[] = $meta->getName();
+        }
+        return array_map(function ($className) {
+            return (new ReflectionClass($className))->getShortName();
+        }, $entityClasses);
     }
 }

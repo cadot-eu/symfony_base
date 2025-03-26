@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -37,6 +38,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $prenom = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $note = null;
 
     public function getId(): ?int
     {
@@ -127,7 +131,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function fieldsCrud(): array
     {
         //on donne le nom de l'attribut que l'on veut voir dans dashboard et on peut ajouter * à la fin pour une modification possible
-        return ['nom', 'prenom*'];
+        return ['nom', 'prenom*', 'note#'];
     }
 
     public function getPrenom(): ?string
@@ -138,6 +142,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPrenom(?string $prenom): static
     {
         $this->prenom = $prenom;
+
+        return $this;
+    }
+
+    public function getNote(): ?string
+    {
+        return $this->note;
+    }
+
+    public function setNote(?string $note): static
+    {
+        $this->note = $note;
 
         return $this;
     }
