@@ -32,7 +32,7 @@ class AdminController extends AbstractController
     }
 
     #[Route('/update', name: 'update_field', methods: ['POST'])]
-    public function updateField(Request $request, EntityManagerInterface $em): JsonResponse
+    public function updateField(Request $request, EntityManagerInterface $em): Response
     {
         $data = json_decode($request->getContent(), true);
 
@@ -44,12 +44,12 @@ class AdminController extends AbstractController
         $entity = $em->getRepository($entityClass)->find($data['id']);
 
         if (!$entity) {
-            return new JsonResponse(['error' => 'Entity not found'], 404);
+            $this->addFlash('error', "L'entité n'existe pas.");
         }
 
         $setter = 'set' . ucfirst($data['field']);
         if (!method_exists($entity, $setter)) {
-            return new JsonResponse(['error' => 'Invalid field'], 400);
+            $this->addFlash('error', "Le champ n'existe pas.");
         }
 
         $entity->$setter($data['value']);

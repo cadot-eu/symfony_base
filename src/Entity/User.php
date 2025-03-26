@@ -131,7 +131,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function fieldsCrud(): array
     {
         //on donne le nom de l'attribut que l'on veut voir dans dashboard et on peut ajouter * à la fin pour une modification possible
-        return ['nom', 'prenom*', 'note#'];
+        return ['nom', 'prenom*', 'note'];
     }
 
     public function getPrenom(): ?string
