@@ -16,7 +16,6 @@
 	</thead>
 	<tbody>
 		{% for object in objects %}
-		{{dump(object)}}
 			<tr>
 				<td>{{ object.id }}</td>
 				{% for field in objects[0].fieldsCrud|default %}
