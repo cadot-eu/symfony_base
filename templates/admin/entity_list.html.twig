@@ -20,23 +20,25 @@
 				<td>{{ object.id }}</td>
 				{% for field in objects[0].fieldsCrud|default %}
 					{% if field|slice(-1) == '*' %}
-							{% set champ = field|slice(0, -1) %}
-							{% else %}
-							{% set champ = field %}
+						{% set champ = field|slice(0, -1) %}
+					{% else %}
+						{% set champ = field %}
 					{% endif %}
 					{% set texte=attribute(object, champ)|raw %}
 					{% if texte|length > 10 %}
-						<td data-controller="tooltip" data-tooltip-html="texte">{{texte|u.truncate(8, '...')}}</td>
+						<td>
+							<span data-controller="tooltip" data-tooltip-html-value="{{texte}}">{{texte|u.truncate(8, '...')}}</span>
+						</td>
 					{% else %}
 						{% if field|slice(-1) == '*' %}
-							<td contenteditable="true"  data-controller="editable" data-editable-url-value="{{ path('admin_update_field')}}" data-editable-id-value="{{ object.id }}" data-editable-entity-value="{{ entity }}" data-editable-field-value="{{ champ }}" >{{texte}}</td>
-							{% else %}
+							<td contenteditable="true" data-controller="editable" data-editable-url-value="{{ path('admin_update_field')}}" data-editable-id-value="{{ object.id }}" data-editable-entity-value="{{ entity }}" data-editable-field-value="{{ champ }}">{{texte}}</td>
+						{% else %}
 							<td>{{texte}}</td>
 						{% endif %}
 					{% endif %}
 				{% endfor %}
 				<td>
-					<button class="btn btn-danger btn-sm" >Supprimer</button>
+					<button class="btn btn-danger btn-sm">Supprimer</button>
 				</td>
 			</tr>
 		{% endfor %}

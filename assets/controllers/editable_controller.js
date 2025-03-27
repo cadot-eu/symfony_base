@@ -45,7 +45,8 @@ export default class extends Controller {
         }
         else {
             notyf.success('Champ mis à jour');
+            Turbolinks.reload();
         }
-
     }
+
 }
