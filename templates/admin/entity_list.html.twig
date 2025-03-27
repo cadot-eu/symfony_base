@@ -25,7 +25,7 @@
 						{% set champ = field %}
 					{% endif %}
 					{% set texte=attribute(object, champ)|raw %}
-					{% if texte|length > 10 %}
+					{% if texte|length > 20 %}
 						<td>
 							<span data-controller="tooltip" data-tooltip-html-value="{{texte}}">{{texte|u.truncate(8, '...')}}</span>
 						</td>
