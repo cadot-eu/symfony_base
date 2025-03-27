@@ -4,37 +4,32 @@
 {% endblock %}
 
 {% block body %}
-	<div {{ stimulus_controller('admin') }}>
+	<div class="container-fluid">
+		<div
+			class="row">
+			<!-- Sidebar -->
+			<nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+				<div class="position-sticky">
+					<ul class="nav flex-column">
+						{% for entity in entities %}
+							<li class="nav-item">
+								<a class="nav-link" href="{{ path('admin_list_entities', { entity: entity }) }}">{{ entity }}</a>
+							</li>
+						{% endfor %}
+					</ul>
+				</div>
+			</nav>
 
-		<div class="container-fluid">
-			<div
-				class="row">
-				<!-- Sidebar -->
-				<nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
-					<div class="position-sticky">
-						<ul class="nav flex-column">
-							{% for entity in entities %}
-								<li class="nav-item">
-									<a class="nav-link" href="#" data-entity="{{ entity }}">{{ entity }}</a>
-								</li>
-							{% endfor %}
-						</ul>
-					</div>
-				</nav>
+			<!-- Content -->
+			<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+				<h2>Liste des objets</h2>
 
-				<!-- Content -->
-				<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-					<h2>Liste des objets</h2>
-
-					{% if entity is defined %}
-						<turbo-frame id="the_frame_id">
-							{{include('/admin/entity_list.html.twig')}}
-						</turbo-frame>
-					{% endif %}
+				{% if entity is defined %}
+					{{include('/admin/entity_list.html.twig')}}
+				{% endif %}
 
 
-				</main>
-			</div>
+			</main>
 		</div>
 	</div>
 {% endblock %}
