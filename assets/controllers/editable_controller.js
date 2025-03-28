@@ -1,21 +1,10 @@
 import { Controller } from '@hotwired/stimulus';
 import { Notyf } from 'notyf';
-const notyf = new Notyf(
-    {
-        duration: 2000,
-        position: {
-            x: 'right',
-            y: 'top',
-        }
-    }
-);
+const notyf = new Notyf({ duration: 2000, position: { x: 'right', y: 'top' } });
 
 export default class extends Controller {
     static values = {
         url: String,
-        field: String,
-        value: String,
-        id: String,
         entity: String
     };
 
@@ -45,7 +34,6 @@ export default class extends Controller {
         }
         else {
             notyf.success('Champ mis à jour');
-            Turbolinks.reload();
         }
     }
 

@@ -41,4 +41,40 @@ return [
     'notyf' => [
         'version' => '3.10.0',
     ],
+    '@editorjs/warning' => [
+        'version' => '1.4.1',
+    ],
+    '@editorjs/paragraph' => [
+        'version' => '2.11.7',
+    ],
+    '@editorjs/quote' => [
+        'version' => '2.7.6',
+    ],
+    '@editorjs/image' => [
+        'version' => '2.10.2',
+    ],
+    '@editorjs/code' => [
+        'version' => '2.9.3',
+    ],
+    '@editorjs/link' => [
+        'version' => '2.6.2',
+    ],
+    '@editorjs/header' => [
+        'version' => '2.8.8',
+    ],
+    '@editorjs/delimiter' => [
+        'version' => '1.4.2',
+    ],
+    '@editorjs/nested-list' => [
+        'version' => '1.4.3',
+    ],
+    '@editorjs/table' => [
+        'version' => '2.4.4',
+    ],
+    '@editorjs/attaches' => [
+        'version' => '1.3.0',
+    ],
+    'editorjs-inline-image' => [
+        'version' => '2.2.2',
+    ],
 ];
