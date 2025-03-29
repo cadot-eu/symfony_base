@@ -4,7 +4,7 @@
 	</div>
 {% endif %}
 <div class="d-flex justify-content-end mb-2">
-	<form method="post" action="{{ path('admin_create_entity', {'entity': entity}) }}" data-turbo="false">
+	<form method="post" action="{{ path('admin_create_entity', {'entity': entity}) }}">
 		<button type="submit" class="btn btn-primary">Ajouter</button>
 	</form>
 </div>
@@ -61,9 +61,11 @@
 								{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
 							</a>
 						{% endfor %}
-						<button class="btn btn-secondary btn-sm" data-controller="form" data-form-url-value="{{ path('admin_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': constant('class',object)|split('\\')|last}) }}" data-form-parent-value="#ligne_{{ object.id }}" data-form-method-value="POST">
-							<i class="bi bi-plus"></i>
-						</button>
+						<form method="post" action="{{ path('admin_create_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': constant('class',object)|split('\\')|last }) }}" method="post">
+							<button type="submit" class="btn btn-primary btn-sm">
+								<i class="bi bi-plus"></i>
+							</button>
+						</form>
 					</td>
 				{% endfor %}
 				<td>
