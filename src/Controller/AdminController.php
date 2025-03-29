@@ -52,6 +52,7 @@ class AdminController extends AbstractController
         if (!method_exists($entity, $setter)) {
             $this->addFlash('error', "Le champ n'existe pas.");
         }
+        $this->addFlash('success', "Le champ a bien été mis à jour.");
         $entity->$setter($data['value']);
         $em->persist($entity);
         $em->flush();
@@ -123,7 +124,7 @@ class AdminController extends AbstractController
                     continue 2;
                 }
                 //pour le cas des relations
-                if ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany' || $attribute->getName() === 'Doctrine\ORM\Mapping\ManyToOne' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToOne') {
+                if ($entityParentId && ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany' || $attribute->getName() === 'Doctrine\ORM\Mapping\ManyToOne' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToOne')) {
                     //on récupère l'entité parent par son id
                     $entityParent = $em->getRepository($property->getType()->getName())->find($entityParentId);
                     if ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany') {
@@ -135,6 +136,7 @@ class AdminController extends AbstractController
                     continue 2;
                 }
             }
+
             if ($property->getDefaultValue() === null) {
                 $setter = 'set' . ucfirst($property->getName());
                 switch ($property->getType()->getName()) {
@@ -157,6 +159,11 @@ class AdminController extends AbstractController
                         $entityN->$setter([]);
                         break;
                     default:
+                        foreach ($property->getAttributes() as $attribute) {
+                            if ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToMany' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToOne') {
+                                continue 2;
+                            }
+                        }
                         $entityN->$setter(null);
                         break;
                 }

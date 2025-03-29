@@ -11,7 +11,7 @@ import LinkTool from '@editorjs/link';
 import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import AttachesTool from '@editorjs/attaches';
-
+import flasher from '@flasher/flasher';
 
 export default class extends Controller {
     connect() {
@@ -123,11 +123,11 @@ export default class extends Controller {
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                notyf.success('Contenu mis à jour');
+                                flasher.success('Contenu mis à jour');
                                 Turbolinks.reload();
                             }
                             else {
-                                notyf.error('Erreur lors de la mise à jour du contenu');
+                                flasher.error('Erreur lors de la mise à jour du contenu');
                             }
                         });
                 });

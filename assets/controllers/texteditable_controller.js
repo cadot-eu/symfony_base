@@ -12,8 +12,7 @@ import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import AttachesTool from '@editorjs/attaches';
 import { Modal } from 'bootstrap';
-import { Notyf } from 'notyf';
-const notyf = new Notyf({ duration: 2000, position: { x: 'right', y: 'top' } });
+import flasher from '@flasher/flasher';
 
 export default class extends Controller {
     static values = {
@@ -165,8 +164,8 @@ export default class extends Controller {
 
             if (data.success) {
                 // Notification de succès
-                if (typeof notyf !== 'undefined') {
-                    notyf.success('Contenu mis à jour avec succès');
+                if (typeof flasher !== 'undefined') {
+                    flasher.success('Contenu mis à jour avec succès');
                     // Onm et le contenu à jour
                     this.contentValue = JSON.stringify(outputData);
 
@@ -183,8 +182,8 @@ export default class extends Controller {
             }
         } catch (error) {
             console.error('Erreur de sauvegarde:', error);
-            if (typeof notyf !== 'undefined') {
-                notyf.error('Impossible de mettre à jour le contenu');
+            if (typeof flasher !== 'undefined') {
+                flasher.error('Impossible de mettre à jour le contenu');
             }
         }
     }

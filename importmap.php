@@ -38,9 +38,6 @@ return [
     'sweetalert2' => [
         'version' => '11.17.2',
     ],
-    'notyf' => [
-        'version' => '3.10.0',
-    ],
     '@editorjs/warning' => [
         'version' => '1.4.1',
     ],
@@ -76,5 +73,8 @@ return [
     ],
     'editorjs-inline-image' => [
         'version' => '2.2.2',
+    ],
+    '@flasher/flasher' => [
+        'version' => '2.1.5',
     ],
 ];

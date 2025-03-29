@@ -54,18 +54,26 @@
 						{% endif %}
 					{% endif %}
 				{% endfor %}
-				{% for association in associations %}
+				{% for entityParent,association in associations %}
+					{% set typeAssociation = constant('class',association)|split('\\')|last %}
 					<td>
+
+
 						{% for item in attribute(object, association.fieldName) %}
 							<a href="{{ path('admin_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}">
 								{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
 							</a>
 						{% endfor %}
-						<form method="post" action="{{ path('admin_create_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': constant('class',object)|split('\\')|last }) }}" method="post">
-							<button type="submit" class="btn btn-primary btn-sm">
-								<i class="bi bi-plus"></i>
-							</button>
-						</form>
+						{% if typeAssociation != "ManyToOneAssociationMapping"  %}
+							<form method="post" action="{{ path('admin_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}" turbo="false">
+								<button type="submit" class="btn btn-primary btn-sm">
+									<i class="bi bi-plus"></i>
+								</button>
+							</form>
+						{% else %}
+							{% set item = attribute(object, association.fieldName) %}
+							{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
+						{% endif %}
 					</td>
 				{% endfor %}
 				<td>

@@ -1,6 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
-import { Notyf } from 'notyf';
-const notyf = new Notyf({ duration: 2000, position: { x: 'right', y: 'top' } });
+import flasher from '@flasher/flasher';
 
 // example:
 // <button type="button" data-controller="form" data-form-url-value="/admin/update" data-form-value="Bonjour" data-form-method-value="PUT">Cliquez ici</button>
@@ -29,9 +28,9 @@ export default class extends Controller {
 
         let result = await response.json();
         if (!result.success) {
-            notyf.error('Erreur lors de l\'envoi du formulaire');
+            flasher.error('Erreur lors de l\'envoi du formulaire');
         } else {
-            notyf.success('Formulaire envoyé');
+            flasher.success('Formulaire envoyé');
             if (this.parentValue && this.methodValue === 'DELETE' && document.querySelector(this.parentValue)) {
                 document.querySelector(this.parentValue).remove();
             }

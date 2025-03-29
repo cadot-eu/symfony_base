@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
-import { Notyf } from 'notyf';
-const notyf = new Notyf({ duration: 2000, position: { x: 'right', y: 'top' } });
+import flasher from '@flasher/flasher';
+
 
 export default class extends Controller {
     static values = {
@@ -30,10 +30,10 @@ export default class extends Controller {
         let result = await response.json();
         if (!result.success) {
             this.element.innerText = this.valueValue;
-            notyf.error('Erreur lors de la mise à jour du champ');
+            flasher.error('Erreur lors de la mise à jour du champ');
         }
         else {
-            notyf.success('Champ mis à jour');
+            flasher.success('Champ mis à jour');
         }
     }
 
