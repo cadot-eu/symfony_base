@@ -7,16 +7,19 @@ fi
 
 # Lire les fichiers et dossiers à ignorer depuis .gitignore
 # Ajouter .git, .env et Caddyfile par défaut
-IGNORED_PATTERNS=(".git" ".env" "Caddyfile" "compose.yaml" ".env.dev")
-if [ -f .gitignore ]; then
-    while IFS= read -r line; do
-        # Ignorer les commentaires et lignes vides
-        [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
-        # Nettoyer le motif
-        clean_pattern="${line#/}" # Supprimer le / initial
-        IGNORED_PATTERNS+=("$clean_pattern")
-    done < .gitignore
-fi
+IGNORED_PATTERNS=(".git" ".env" "Caddyfile" "compose.yaml" ".env.dev" )
+for ignore_file in .gitignore .ignore; do
+    if [ -f "$ignore_file" ]; then
+        while IFS= read -r line; do
+            # Ignorer les commentaires et lignes vides
+            [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+            # Nettoyer le motif
+            clean_pattern="${line#/}" # Supprimer le / initial
+            IGNORED_PATTERNS+=("$clean_pattern")
+        done < "$ignore_file"
+    fi
+done
+
 
 # Fonction pour vérifier si un fichier ou un dossier doit être ignoré
 should_ignore() {

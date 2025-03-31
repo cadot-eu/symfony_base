@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c72f49bb6a550f63ab03f6c266ad39aa",
+    "content-hash": "365fa70a3d8c57f4b116f74622c6c6ce",
     "packages": [
         {
             "name": "composer/semver",
@@ -1302,6 +1302,45 @@
                 "source": "https://github.com/doctrine/sql-formatter/tree/1.5.2"
             },
             "time": "2025-01-24T11:45:48+00:00"
+        },
+        {
+            "name": "edd-g/editorjs-simple-html-parser",
+            "version": "v1.3.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Edd-G/editorjs-simple-html-parser.git",
+                "reference": "6ffed956982417d3b933903a0466820b970ba9e7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Edd-G/editorjs-simple-html-parser/zipball/6ffed956982417d3b933903a0466820b970ba9e7",
+                "reference": "6ffed956982417d3b933903a0466820b970ba9e7",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "ext-json": "*",
+                "masterminds/html5": "^2.7@dev",
+                "php": ">=7.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Durlecode\\EJSParser\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A simple Json to Html parser for EditorJS library",
+            "support": {
+                "source": "https://github.com/Edd-G/editorjs-simple-html-parser/tree/v1.3.5"
+            },
+            "time": "2024-01-06T06:56:11+00:00"
         },
         {
             "name": "egulias/email-validator",
@@ -11009,7 +11048,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -11017,6 +11056,6 @@
         "ext-ctype": "*",
         "ext-iconv": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }

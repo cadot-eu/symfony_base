@@ -28,3 +28,4 @@ Stimulus & Controller pour modification en directe
 
 - `dsh`: entrer dans le docker
 - `dlogs`: voir les logs
+# labo

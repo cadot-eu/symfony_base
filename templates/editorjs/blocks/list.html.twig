@@ -1,0 +1,27 @@
+{% macro renderList(items, tag, level) %}
+	{# Définir un tableau avec les icônes pour chaque niveau #}
+	{% set icons = {
+        0: 'bi bi-dot', 
+        1: 'bi bi-chevron-right', 
+        2: 'bi bi-star', 
+        'default': 'bi bi-dot'  # Par défaut, on utilise un point
+    } %}
+
+	<{{tag}} class="{% if tag == 'ul' %}list-unstyled{% else %}list-group-numbered{% endif %} {% if level > 0 %}ms-3{% endif %} editorjs-block-list">
+		{% for item in items %}
+			<li
+				class="list-group-item">
+				{# Récupérer l'icône selon le niveau, avec une valeur par défaut pour les niveaux supérieurs #}
+				<i class="{{ icons[level] is defined ? icons[level] : icons['default'] }}"></i>
+				{{ item.content|raw }}
+
+				{% if item.items is defined and item.items is not empty %}
+					{{ _self.renderList(item.items, tag, level + 1) }}
+				{% endif %}
+			</li>
+		{% endfor %}
+	</{{tag}}>
+{% endmacro %}
+
+{% set tag = block.data.style == 'unordered' ? 'ul' : 'ol' %}
+{{ _self.renderList(block.data.items, tag, 0) }}

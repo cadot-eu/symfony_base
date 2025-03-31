@@ -8,12 +8,15 @@
 		<div
 			class="row">
 			<!-- Sidebar -->
-			<nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+
+			<nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar mt-5">
+
 				<div class="position-sticky">
+					<a class="btn btn-outline-primary btn-sm mt-2" href="{{ path('admin_dashboard') }}">Tableau de bord</a>
 					<ul class="nav flex-column">
-						{% for entity in entities|sort %}
+						{% for entite in entities|sort %}
 							<li class="nav-item">
-								<a class="nav-link" href="{{ path('admin_list_entities', { entity: entity }) }}">{{ entity }}</a>
+								<a class="nav-link " href="{{ path('admin_list_entities', { entity: entite }) }}">{{ entite == (entity|default) ? '<span class="bi bi-arrow-right"></span>' : '' }}{{ entite }}</a>
 							</li>
 						{% endfor %}
 					</ul>
@@ -22,14 +25,14 @@
 
 			<!-- Content -->
 			<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-				<h2>Liste des objets</h2>
+				<h2>
+					{{ entity is defined?	'Les données: ' ~entity :'Tableau de bord'}}</h2>
 
 				{% if entity is defined %}
 					{{include('/admin/entity_list.html.twig')}}
 				{% endif %}
-
-
 			</main>
+			<div class="mt-5" id="preview"></div>
 		</div>
 	</div>
 {% endblock %}

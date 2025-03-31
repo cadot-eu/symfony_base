@@ -12,6 +12,11 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use ReflectionClass;
 use Symfony\Component\Serializer\SerializerInterface;
+use Durlecode\EJSParser\Parser;
+use App\Service\EditorJsParser;
+use Symfony\Component\DependencyInjection\Loader\Configurator\twig;
+use Twig\TwigTest;
+use Twig\Environment;
 
 #[Route('/admin', name: 'admin_')]
 #[IsGranted('ROLE_ADMIN')]
@@ -40,19 +45,10 @@ class AdminController extends AbstractController
         if (!$data || !isset($data['value'])) {
             return new JsonResponse(['error' => 'Invalid data'], 400);
         }
-
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
         $entity = $em->getRepository($entityClass)->find($id);
 
-        if (!$entity) {
-            $this->addFlash('error', "L'entité n'existe pas.");
-        }
-
         $setter = 'set' . ucfirst($field);
-        if (!method_exists($entity, $setter)) {
-            $this->addFlash('error', "Le champ n'existe pas.");
-        }
-        $this->addFlash('success', "Le champ a bien été mis à jour.");
         $entity->$setter($data['value']);
         $em->persist($entity);
         $em->flush();
@@ -80,12 +76,20 @@ class AdminController extends AbstractController
         //on regarde si on a des relations
         $metadata = $em->getClassMetadata($entityClass);
         $associations = $metadata->getAssociationMappings();
+        $parent = null;
+        foreach ($associations as $parentNom => $association) {
+            if (in_array(\get_class($association), ['Doctrine\ORM\Mapping\ManyToOneAssociationMapping'])) {
+                $parent = $parentNom;
+            }
+        }
+
         return $this->render('admin/dashboard.html.twig', [
             'objects' => $objects,
             'objectsType' => $objectsType,
             'entity' => $entity,
             'entities' => $this->getEntitiesName(),
-            'associations' => $associations
+            'associations' => $associations,
+            'parent' => $parent
         ]);
     }
     #[Route('/delete/{entity}/{id}', name: 'delete_entity', methods: ['DELETE'])]
@@ -161,7 +165,7 @@ class AdminController extends AbstractController
                     default:
                         foreach ($property->getAttributes() as $attribute) {
                             if ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToMany' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToOne') {
-                                continue 2;
+                                break 2;
                             }
                         }
                         $entityN->$setter(null);
@@ -172,6 +176,26 @@ class AdminController extends AbstractController
         $em->persist($entityN);
         $em->flush();
         return $this->redirectToRoute('admin_list_entities', ['entity' => $entity]);
+    }
+    #[Route('/get/{entity}/{id}/{field}', name: 'get_entity', methods: ['GET'])]
+    public function getDatasOfObjet(string $entity, string $id, string $field, EntityManagerInterface $em, Environment $twig): Response
+    {
+        $entityClass = 'App\\Entity\\' . ucfirst($entity);
+        $entity = $em->getRepository($entityClass)->find($id);
+        $getter = 'get' . ucfirst($field);
+        $json = $entity->$getter();
+        $content = json_decode($json, true);
+        $blocks = $content['blocks'] ?? [];
+        foreach ($blocks as $number => $block) {
+            $templatePath = "editorjs/blocks/{$block['type']}.html.twig";
+            if (!file_exists('/app/templates/' . $templatePath)) {
+                //modification du bloc en bloc inconnu
+                $blocks[$number]['type'] = 'unknown-' . $block['type'];
+            }
+        }
+        return new Response($this->render('editorjs_render.html.twig', [
+            'blocks' => $blocks
+        ])->getContent());
     }
 
 

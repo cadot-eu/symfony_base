@@ -62,9 +62,6 @@ return [
     '@editorjs/delimiter' => [
         'version' => '1.4.2',
     ],
-    '@editorjs/nested-list' => [
-        'version' => '1.4.3',
-    ],
     '@editorjs/table' => [
         'version' => '2.4.4',
     ],
@@ -76,5 +73,30 @@ return [
     ],
     '@flasher/flasher' => [
         'version' => '2.1.5',
+    ],
+    'editorjs-alert' => [
+        'version' => '1.1.4',
+    ],
+    '@editorjs/list' => [
+        'version' => '2.0.6',
+    ],
+    '@editorjs/marker' => [
+        'version' => '1.4.0',
+    ],
+    '@sotaproject/strikethrough' => [
+        'version' => '1.0.1',
+    ],
+    'editorjs-html' => [
+        'version' => '4.0.5',
+    ],
+    'highlight.js' => [
+        'version' => '11.11.1',
+    ],
+    'highlight.js/styles/github.css' => [
+        'version' => '11.11.1',
+        'type' => 'css',
+    ],
+    'bigpicture' => [
+        'version' => '2.6.3',
     ],
 ];

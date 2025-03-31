@@ -1,0 +1,17 @@
+{% for block in blocks %}
+	{% if block.type starts with 'unknown-' %}
+		<div class="editorjs-unknown-block">
+			<div class="alert alert-error" role="alert">
+				Bloc inconnu :
+				{{ block.type|replace({'unknown-': ''}) }}
+				<pre>{{ dump(block) }}</pre>
+			</div>
+		</div>
+	{% else %}
+		{% set template_path = 'editorjs/blocks/' ~ block.type ~ '.html.twig' %}
+		{% include template_path with { 'block': block } %}
+
+	{% endif %}
+
+
+{% endfor %}

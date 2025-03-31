@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 import EditorJS from "https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.26.5/+esm"
 import Header from '@editorjs/header';
-import List from '@editorjs/nested-list';
+import EditorjsList from '@editorjs/list';
 import Paragraph from '@editorjs/paragraph';
 import Quote from '@editorjs/quote';
 import Warning from '@editorjs/warning';
@@ -11,12 +11,21 @@ import LinkTool from '@editorjs/link';
 import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import AttachesTool from '@editorjs/attaches';
+import Alert from 'editorjs-alert';
+import Marker from '@editorjs/marker';
+import Strikethrough from '@sotaproject/strikethrough';
+import Tooltip from '../scripts/editorjs/tooltip.js';
+
+
+import edjsHTML from "editorjs-html";
+
 import { Modal } from 'bootstrap';
 import flasher from '@flasher/flasher';
 
 export default class extends Controller {
     static values = {
         content: { type: String, default: '' },
+        directory: { type: String, default: 'default' },
         url: String
     }
 
@@ -56,11 +65,20 @@ export default class extends Controller {
         modal.show();
 
         // Initialiser l'éditeur une fois le modal ouvert
-        this.initializeEditor();
+        try {
+            this.initializeEditor();
+
+        } catch (error) {
+            flasher.error('Erreur lors de l\'initialisation de l\'éditeur:', error);
+        }
 
         // Gérer la suppression du modal après fermeture
         modalElement.addEventListener('hidden.bs.modal', () => {
             document.body.removeChild(modalElement);
+        });
+        // save
+        document.getElementById('save-content').addEventListener('click', () => {
+            this.saveContent();
         });
     }
 
@@ -71,6 +89,13 @@ export default class extends Controller {
 
             // Initialiser EditorJS
             this.editor = new EditorJS({
+                onReady: () => {
+                    //on liste les class ce-block et on active un drg and drop
+                    document.querySelectorAll('.ce-block').forEach((block) => {
+                        //block.insertAdjacentHTML('afterbegin', '<i class="bi bi-arrows-move drag-handle"></i>');
+                    });
+
+                },
                 holder: 'editor-container',
                 autofocus: true,
                 inlineToolbar: true,
@@ -78,18 +103,16 @@ export default class extends Controller {
                 tools: this.getEditorTools()
             });
 
-            // Ajouter le gestionnaire de sauvegarde
-            document.getElementById('save-content')?.addEventListener('click', () => this.saveContent());
         } catch (error) {
             console.error('Erreur lors de l\'initialisation de l\'éditeur:', error);
         }
+
     }
 
     getEditorTools() {
         return {
             header: {
                 class: Header,
-                inlineToolbar: true,
                 config: {
                     placeholder: "Entrez un en-tête",
                     levels: [2, 3, 4],
@@ -98,15 +121,15 @@ export default class extends Controller {
             },
             paragraph: {
                 class: Paragraph,
-                inlineToolbar: true,
             },
-            list: {
-                class: List,
-                inlineToolbar: true,
+            tooltip: {
+                class: Tooltip,
+                config: {
+                    tooltipPlaceholder: "Entrez le texte du tooltip"
+                }
             },
             quote: {
                 class: Quote,
-                inlineToolbar: true,
                 config: {
                     quotePlaceholder: "Entrez une citation",
                     captionPlaceholder: "Auteur de la citation"
@@ -136,14 +159,35 @@ export default class extends Controller {
             attaches: {
                 class: AttachesTool,
                 config: {
-                    endpoint: '/editorjs/upload/file/articles'
+                    endpoint: '/editorjs/upload/file/${directory}'
                 }
             },
+            Marker: {
+                class: Marker,
+                shortcut: 'CTRL+SHIFT+M',
+            },
+            strikethrough: Strikethrough,
             linkTool: {
                 class: LinkTool,
             },
             delimiter: Delimiter,
-            table: Table
+            table: Table,
+            alert: {
+                class: Alert,
+                shortcut: 'CMD+SHIFT+A',
+                config: {
+                    alertTypes: ['primary', 'secondary', 'info', 'success', 'warning', 'danger', 'light', 'dark'],
+                    defaultType: 'primary',
+                },
+            },
+            list: {
+                class: EditorjsList,
+                config: {
+                    defaultStyle: 'unordered'
+                },
+            },
+
+
         };
     }
 
