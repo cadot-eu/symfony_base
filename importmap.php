@@ -29,7 +29,7 @@ return [
         'version' => '5.3.3',
     ],
     '@popperjs/core' => [
-        'version' => '2.11.8',
+        'version' => '2.10.2',
     ],
     'bootstrap/dist/css/bootstrap.min.css' => [
         'version' => '5.3.3',
@@ -98,5 +98,12 @@ return [
     ],
     'bigpicture' => [
         'version' => '2.6.3',
+    ],
+    'tippy.js' => [
+        'version' => '6.3.7',
+    ],
+    'tippy.js/themes/material.css' => [
+        'version' => '6.3.7',
+        'type' => 'css',
     ],
 ];

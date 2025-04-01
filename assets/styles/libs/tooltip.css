@@ -1,0 +1,89 @@
+/* tooltip.css */
+[data-bs-toggle="tooltip"] {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Contenu du tooltip */
+[data-bs-toggle="tooltip"]::after {
+    content: attr(data-bs-title);
+    position: absolute;
+    visibility: hidden;
+    opacity: 0;
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 1000;
+    width: max-content;
+    max-width: 300px;
+    pointer-events: none;
+    text-align: center;
+
+    /* Animation par défaut */
+    transition:
+        opacity 0.3s ease,
+        transform 0.2s ease;
+}
+
+/* Positions */
+[data-bs-toggle="tooltip"][data-bs-placement="top"]::after {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(5px);
+}
+
+[data-bs-toggle="tooltip"][data-bs-placement="bottom"]::after {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+[data-bs-toggle="tooltip"][data-bs-placement="left"]::after {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateX(5px);
+}
+
+[data-bs-toggle="tooltip"][data-bs-placement="right"]::after {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateX(-5px);
+}
+
+/* Animations */
+[data-bs-toggle="tooltip"][data-bs-animation="fade"]::after {
+    transition: opacity 0.3s ease;
+}
+
+[data-bs-toggle="tooltip"][data-bs-animation="slide"]::after {
+    transition:
+        opacity 0.3s ease,
+        transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+[data-bs-toggle="tooltip"][data-bs-animation="scale"]::after {
+    transform-origin: center;
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+    transform: scale(0.8) translateX(-50%) translateY(0);
+}
+
+/* États hover */
+[data-bs-toggle="tooltip"]:hover::after {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+[data-bs-toggle="tooltip"][data-bs-placement="left"]:hover::after,
+[data-bs-toggle="tooltip"][data-bs-placement="right"]:hover::after {
+    transform: translateY(-50%) translateX(0);
+}
+
+[data-bs-toggle="tooltip"][data-bs-animation="scale"]:hover::after {
+    transform: scale(1) translateX(-50%) translateY(0);
+}

@@ -1,259 +1,224 @@
-/**
- * Tooltip Tool pour EditorJS
- */
 export default class Tooltip {
     /**
-     * Constructeur de l'outil
-     *
-     * @param {object} options - Les options fournies lors de la construction
-     * @param {string} options.tooltipPlaceholder - Placeholder pour le texte du tooltip
-     */
-    constructor({ data, config, api }) {
-        this.data = data || {};
-        this.api = api;
-        this.config = config || {};
-        this.tooltipPlaceholder = config.tooltipPlaceholder || 'Entrez le texte du tooltip';
-
-        // CSS pour l'élément sélectionné avec tooltip
-        this.CSS = {
-            tooltip: 'tooltip-toggle'
-        };
-    }
-
-    /**
-     * Surcharge de render() pour indiquer que c'est un outil inline
+     * Allow to use Tooltip as Inline Tool
+     * @returns {boolean}
      */
     static get isInline() {
         return true;
     }
 
     /**
-     * Renvoie true pour indiquer que l'outil est actif sur le nœud courant
-     *
-     * @param {HTMLElement} node - Le nœud avec lequel vérifier l'activation
-     * @return {boolean}
-     */
-    checkState(selection) {
-        const tooltip = this.getTooltipFromSelection(selection);
-        return !!tooltip; // Retourne true si un tooltip a été trouvé
-    }
-
-    /**
-     * Trouve l'élément tooltip dans la sélection actuelle
-     * 
-     * @param {Selection} selection - L'objet selection du DOM
-     * @returns {HTMLElement|null} - L'élément tooltip ou null si aucun n'est trouvé
-     */
-    getTooltipFromSelection(selection) {
-        if (!selection || !selection.anchorNode) {
-            return null;
-        }
-
-        // si nextSibling on le renvoie
-        if (this.isTooltip(selection.anchorNode.nextSibling)) {
-            return selection.anchorNode.nextSibling;
-        }
-
-
-        return null;
-    }
-
-    /**
-     * Vérifie si un nœud est un élément tooltip
-     * 
-     * @param {Node} node - Le nœud à vérifier
-     * @returns {boolean} - True si c'est un tooltip
-     */
-    isTooltip(node) {
-        return (
-            node &&
-            node.nodeType === Node.ELEMENT_NODE &&
-            node.classList &&
-            node.classList.contains(this.CSS.tooltip) &&
-            node.hasAttribute('data-bs-toggle') &&
-            node.hasAttribute('data-bs-title')
-        );
-    }
-
-    /**
-     * Balises autorisées pour contenir cet outil
+     * Sanitize config for Tooltip Tool
+     * @returns {object}
      */
     static get sanitize() {
         return {
             span: {
                 class: true,
                 'data-bs-toggle': true,
-                'data-bs-title': true
+                'data-bs-title': true,
+                'data-bs-html': true
+            },
+            html: {
+                b: true,
+                i: true,
+                u: true,
+                em: true,
+                strong: true,
+                a: {
+                    href: true,
+                    target: true
+                },
+                ul: true,
+                ol: true,
+                li: true,
+                p: true,
+                br: true,
+                h1: true,
+                h2: true,
+                h3: true,
+                h4: true,
+                h5: true,
+                h6: true,
+                img: {
+                    src: true,
+                    alt: true,
+                    title: true
+                },
+                table: true,
+                tr: true,
+                td: true,
+                th: true,
+                thead: true,
+                tbody: true,
+                tfoot: true,
+                caption: true,
+                col: true,
+                colgroup: true
             }
         };
     }
 
     /**
-     * Renvoie l'icône et le titre de l'outil
+     * Get current state
+     * @returns {boolean}
      */
-    static get title() {
-        return 'Tooltip';
+    get state() {
+        return this._state;
     }
 
     /**
-     * Renvoie l'icône SVG pour l'outil
+     * Set current state and update button UI
+     * @param {boolean} state - Current state
      */
-    static get toolbox() {
-        return {
-            icon: '<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 1C7.79086 1 6 2.79086 6 5C6 7.20914 7.79086 9 10 9C12.2091 9 14 7.20914 14 5C14 2.79086 12.2091 1 10 1ZM5 5C5 2.23858 7.23858 0 10 0C12.7614 0 15 2.23858 15 5C15 7.76142 12.7614 10 10 10C7.23858 10 5 7.76142 5 5ZM9.5 12H10.5V19H9.5V12Z"/></svg>',
-            title: 'Tooltip'
-        };
+    set state(state) {
+        this._state = state;
+        this.button.classList.toggle(this.api.styles.inlineToolButtonActive, state);
     }
 
     /**
-     * Surcharge de render() pour définir le comportement du plugin quand il est activé
+     * Constructor
+     * @param {object} param0 - Constructor config
+     */
+    constructor({ api }) {
+        this.api = api;
+        this.button = null;
+        this._state = false;
+        this.tag = 'SPAN';
+        this.class = 'cdx-tooltip';
+
+    }
+
+    /**
+     * Create button element for Inline Toolbar
+     * @returns {HTMLElement}
      */
     render() {
         this.button = document.createElement('button');
         this.button.type = 'button';
-        this.button.textContent = 'Tooltip';
-        this.button.classList.add('ce-inline-tool');
+        this.button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" class="bi bi-chat-bubble" viewBox="0 0 24 24"><path d="M2 2h20v20l-4-4H2V2z"/></svg>';
+        this.button.classList.add(this.api.styles.inlineToolButton);
         return this.button;
     }
 
     /**
-     * Demande le texte à mettre dans le tooltip
-     *
-     * @param {String} oldText - Le texte actuel du tooltip
-     * @return {String} Le nouveau texte du tooltip
-     */
-    async askNewText(oldText) {
-        const modal = new Modal(document.getElementById('modalTooltip'), { backdrop: 'static' });
-        document.getElementById('modalTooltipInput').value = oldText;
-        document.getElementById('modalTooltipSave').addEventListener('click', (e) => {
-            e.preventDefault();
-            modal.hide();
-        });
-        modal.show();
-        const promise = new Promise((resolve) => {
-            document.getElementById('modalTooltipSave').addEventListener('click', () => {
-                const text = document.getElementById('modalTooltipInput').value;
-                resolve(text);
-            });
-        });
-        return promise;
-    }
-
-    /**
-     * Substitue le texte sélectionné avec un élément de tooltip ou modifie un tooltip existant
-     *
-     * @param {Range} range - L'objet range pour le texte sélectionné
+     * Handle click on the Inline Tool button
+     * @param {Range} range - Current selection range
      */
     surround(range) {
-        // Récupérer l'objet Selection actuel
-        const selection = window.getSelection();
-
-        // Chercher si un tooltip existe déjà dans la sélection
-        const existingTooltip = this.getTooltipFromSelection(selection);
-
-        // Variable pour stocker le texte du tooltip existant
-        let existingTooltipText = '';
-
-        // Si un tooltip existe déjà
-        if (existingTooltip) {
-            // Récupérer le texte actuel du tooltip
-            existingTooltipText = existingTooltip.getAttribute('data-bs-title') || '';
-
-            // Demander le nouveau texte, en pré-remplissant avec le texte existant
-            const newTooltipText = prompt(this.tooltipPlaceholder, existingTooltipText);
-
-            // Si l'utilisateur annule, on ne fait rien
-            if (newTooltipText === null) {
-                return;
-            }
-
-            // Si l'utilisateur a vidé le texte, on supprime le tooltip
-            if (newTooltipText === '') {
-                // Désactiver le tooltip Bootstrap si nécessaire
-                if (window.bootstrap && typeof bootstrap.Tooltip === 'function') {
-                    try {
-                        const tooltipInstance = bootstrap.Tooltip.getInstance(existingTooltip);
-                        if (tooltipInstance) {
-                            tooltipInstance.dispose();
-                        }
-                    } catch (e) {
-                        console.warn('Erreur lors de la suppression du tooltip Bootstrap:', e);
-                    }
-                }
-
-                // Enlever les attributs tooltip
-                existingTooltip.classList.remove(this.CSS.tooltip);
-                existingTooltip.removeAttribute('data-bs-toggle');
-                existingTooltip.removeAttribute('data-bs-title');
-            } else {
-                // Sinon, mettre à jour le texte du tooltip
-                existingTooltip.setAttribute('data-bs-title', newTooltipText);
-
-                // Réinitialiser le tooltip Bootstrap si nécessaire
-                if (window.bootstrap && typeof bootstrap.Tooltip === 'function') {
-                    try {
-                        const tooltipInstance = bootstrap.Tooltip.getInstance(existingTooltip);
-                        if (tooltipInstance) {
-                            tooltipInstance.dispose();
-                        }
-                        new bootstrap.Tooltip(existingTooltip);
-                    } catch (e) {
-                        console.warn('Erreur lors de la réinitialisation du tooltip Bootstrap:', e);
-                    }
-                }
-            }
-
+        if (this.state) {
+            this.unwrap(range);
             return;
         }
+        this.wrap(range);
+    }
 
-        // Si aucun tooltip n'existe, on en crée un nouveau
+    /**
+     * Wrap selected text in a marker
+     * @param {Range} range - Current selection range
+     */
+    wrap(range) {
+        const selectedText = range.extractContents();
+        const mark = document.createElement(this.tag);
 
-        // Demander le texte du tooltip
-        const tooltipText = prompt(this.tooltipPlaceholder, '');
+        // Add class
+        mark.classList.add(this.class);
+        mark.setAttribute('data-bs-toggle', 'tooltip');
+        mark.setAttribute('data-bs-html', 'true');
+        mark.setAttribute('data-bs-title', '');
+        // Insert the selected text
+        mark.appendChild(selectedText);
 
-        // Si l'utilisateur annule, on ne fait rien
-        if (tooltipText === null) {
-            return;
-        }
+        // Insert the mark at the selection point
+        range.insertNode(mark);
 
-        // Si l'utilisateur n'a pas entré de texte, on ne fait rien
-        if (tooltipText === '') {
-            return;
-        }
+        // Expand selection to the entire mark element
+        this.api.selection.expandToTag(mark);
+    }
 
-        // Créer un conteneur pour le tooltip
-        const newTooltipEl = document.createElement('span');
-        newTooltipEl.classList.add(this.CSS.tooltip);
-        newTooltipEl.setAttribute('data-bs-toggle', 'tooltip');
-        newTooltipEl.setAttribute('data-bs-title', tooltipText);
+    /**
+     * Unwrap text from marker element
+     * @param {Range} range - Current selection range
+     */
+    unwrap(range) {
+        const mark = this.api.selection.findParentTag(this.tag, this.class);
 
-        // Extraire le contenu de la sélection et l'insérer dans notre élément
-        const content = range.extractContents();
-        newTooltipEl.appendChild(content);
+        if (mark) {
+            // Extract the contents from the range
+            const text = range.extractContents();
 
-        // Insérer notre élément tooltip dans le document
-        range.insertNode(newTooltipEl);
+            // Remove the marker
+            mark.remove();
 
-        // Mettre à jour la position du curseur après l'élément
-        this.api.selection.expandToTag(newTooltipEl);
-
-        // Initialiser le tooltip Bootstrap si disponible
-        if (window.bootstrap && typeof bootstrap.Tooltip === 'function') {
-            try {
-                new bootstrap.Tooltip(newTooltipEl);
-            } catch (e) {
-                console.warn('Erreur lors de l\'initialisation du tooltip Bootstrap:', e);
-            }
+            // Insert the contents back
+            range.insertNode(text);
         }
     }
 
     /**
-     * Méthode appelée lorsque l'éditeur est sauvegardé
-     *
-     * @returns {object} - Objet avec le contenu du tooltip
+     * Check if marker is selected and show color picker accordingly
      */
-    save() {
-        // Cette méthode n'est pas nécessaire pour un inline tool
-        return {};
+    checkState() {
+        const mark = this.api.selection.findParentTag(this.tag, this.class);
+
+        // Update button state
+        this.state = !!mark;
+
+        if (this.state) {
+            this.showActions(mark);
+        } else {
+            this.hideActions();
+        }
     }
+
+    /**
+     * Create color picker UI for the Inline Toolbar
+     * @returns {HTMLElement} - Color picker element
+     */
+    renderActions() {
+        //on créé un input pour demander le texte du tooltip
+        this.tooltipInputDiv = document.createElement('div');
+        this.tooltipInput = document.createElement('textarea');
+        this.tooltipInput.setAttribute('rows', '5');
+        this.tooltipInput.setAttribute('cols', '50');
+        this.tooltipInput.placeholder = 'Texte du tooltip';
+        this.tooltipInput.classList.add('form-control');
+        this.tooltipInput.setAttribute('data-bs-title', 'tooltip');
+        this.tooltipInput.setAttribute('data-bs-html', 'true');
+        //on ajoute un petit texte pour expliquer l'utilisation de l'input
+        const balises = this.constructor.sanitize.html;
+        this.tooltipInputHelper = document.createElement('small');
+        this.tooltipInputHelper.classList.add('form-text');
+        this.tooltipInputHelper.textContent = 'Balises autorisées:';
+        const balisesList = Object.keys(balises);
+        for (let i = 0; i < balisesList.length; i += 5) {
+            const balisesChunk = balisesList.slice(i, i + 5).join(', ');
+            this.tooltipInputHelper.insertAdjacentHTML('beforeend', `<br>${balisesChunk}`);
+        }
+        this.tooltipInputDiv.appendChild(this.tooltipInput);
+        this.tooltipInputDiv.appendChild(this.tooltipInputHelper);
+        return this.tooltipInputDiv;
+    }
+    showActions(mark) {
+        const storedTitle = mark.getAttribute('data-bs-title');
+        this.tooltipInput.value = storedTitle;
+
+        this.tooltipInput.oninput = () => {
+            mark.setAttribute('data-bs-title', this.api.sanitizer.clean(this.tooltipInput.value, this.constructor.sanitize.html));
+        };
+
+        this.tooltipInput.hidden = false;
+    }
+
+    hideActions() {
+        if (this.tooltipInput) {
+            // Remove event handler
+            this.tooltipInput.onchange = null;
+
+            // Hide the tooltip input
+            this.tooltipInput.hidden = true;
+        }
+    }
+
+
 }

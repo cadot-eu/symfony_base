@@ -15,9 +15,8 @@ import Alert from 'editorjs-alert';
 import Marker from '@editorjs/marker';
 import Strikethrough from '@sotaproject/strikethrough';
 import Tooltip from '../scripts/editorjs/tooltip.js';
+import initializeTooltips from '../scripts/tippy.js';
 
-
-import edjsHTML from "editorjs-html";
 
 import { Modal } from 'bootstrap';
 import flasher from '@flasher/flasher';
@@ -68,6 +67,7 @@ export default class extends Controller {
         try {
             this.initializeEditor();
 
+
         } catch (error) {
             flasher.error('Erreur lors de l\'initialisation de l\'éditeur:', error);
         }
@@ -94,6 +94,8 @@ export default class extends Controller {
                     document.querySelectorAll('.ce-block').forEach((block) => {
                         //block.insertAdjacentHTML('afterbegin', '<i class="bi bi-arrows-move drag-handle"></i>');
                     });
+                    //on met les tooltips
+                    initializeTooltips();
 
                 },
                 holder: 'editor-container',

@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 import highlight from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import BigPicture from 'bigpicture';
-
+import initializeTooltips from '../scripts/tippy.js';
 
 export default class extends Controller {
     static values = {
@@ -22,7 +22,6 @@ export default class extends Controller {
         // On parse le HTML
         const parser = new DOMParser();
         const doc = parser.parseFromString(data, 'text/html');
-
         // On applique highlight.js aux blocs de code
         const codeBlocks = doc.querySelectorAll('editorjs-block-code');
         codeBlocks.forEach((block) => {
@@ -50,5 +49,8 @@ export default class extends Controller {
                 });
             })
         })
+        //tootip
+        initializeTooltips();
+
     }
 }
