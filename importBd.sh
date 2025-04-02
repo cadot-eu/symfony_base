@@ -1,58 +1,79 @@
 #!/bin/bash
 
-# 📌 Récupérer le nom du projet (nom du dossier courant)
-PROJECT_NAME=$(basename "$PWD")
+# 📌 Demande interactive pour les paramètres
+read -p "Nom du conteneur PostgreSQL (par défaut : database) : " CONTAINER_NAME
+CONTAINER_NAME=${CONTAINER_NAME:-database}
 
-# 📌 Construire le nom du conteneur de la base de données
-CONTAINER_NAME="${PROJECT_NAME}-db"
+read -p "Nom de la base de données : " DB_NAME
+read -p "Nom d'utilisateur PostgreSQL : " PG_USER
+read -sp "Mot de passe PostgreSQL : " PG_PASSWORD
+echo ""
 
-# 📌 Trouver le dernier fichier de sauvegarde disponible
-LATEST_DB_BACKUP=$(ls -t backup_*.sql 2>/dev/null | head -n 1)
-LATEST_UPLOADS_BACKUP=$(ls -t uploads_backup_*.zip 2>/dev/null | head -n 1)
-
-# 📌 Vérifier si des fichiers de sauvegarde existent
-if [[ -z "$LATEST_DB_BACKUP" && -z "$LATEST_UPLOADS_BACKUP" ]]; then
-    echo "❌ Aucun fichier de sauvegarde trouvé. Abandon."
+# 📌 Lister les fichiers de sauvegarde disponibles
+SQL_FILES=(*.sql)
+if [[ ${#SQL_FILES[@]} -eq 0 ]]; then
+    echo "❌ Aucun fichier SQL trouvé pour l'importation."
     exit 1
 fi
 
-echo "📂 Fichiers de sauvegarde détectés :"
-[[ -n "$LATEST_DB_BACKUP" ]] && echo "   📌 Base de données : $LATEST_DB_BACKUP"
-[[ -n "$LATEST_UPLOADS_BACKUP" ]] && echo "   📌 Uploads : $LATEST_UPLOADS_BACKUP"
-echo ""
+echo "📂 Fichiers de sauvegarde disponibles :"
+for i in "${!SQL_FILES[@]}"; do
+    echo "   [$i] ${SQL_FILES[$i]}"
+done
 
-# 📌 Demande de confirmation
-read -p "⚠️  Es-tu sûr de vouloir restaurer ces fichiers ? (oui/non) : " CONFIRMATION
-if [[ "$CONFIRMATION" != "oui" ]]; then
+# 📌 Demander à l'utilisateur de choisir un fichier
+read -p "Quel fichier veux-tu importer ? (numéro) : " FILE_INDEX
+if ! [[ "$FILE_INDEX" =~ ^[0-9]+$ ]] || (( FILE_INDEX < 0 || FILE_INDEX >= ${#SQL_FILES[@]} )); then
+    echo "❌ Sélection invalide."
+    exit 1
+fi
+
+SELECTED_FILE="${SQL_FILES[$FILE_INDEX]}"
+echo "📥 Fichier sélectionné : $SELECTED_FILE"
+
+# 📌 Vérifier si la base de données existe, sinon la créer
+echo "🔍 Vérification de l'existence de la base '$DB_NAME'..."
+export PGPASSWORD=$PG_PASSWORD
+DB_EXISTS=$(docker exec -t "$CONTAINER_NAME" psql -U "$PG_USER" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" | tr -d '[:space:]')
+
+if [[ "$DB_EXISTS" != "1" ]]; then
+    echo "⚠️  La base '$DB_NAME' n'existe pas. Création en cours..."
+    docker exec -t "$CONTAINER_NAME" psql -U "$PG_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\";"
+    echo "✅ Base '$DB_NAME' créée avec succès."
+else
+    echo "✅ La base '$DB_NAME' existe déjà."
+fi
+
+# 📌 Demande de confirmation avant l'import
+read -p "⚠️  Es-tu sûr de vouloir restaurer '$SELECTED_FILE' dans '$DB_NAME' ? (oui/non) : " CONFIRM
+if [[ "$CONFIRM" != "oui" ]]; then
     echo "❌ Import annulé."
-    exit 0
+    exit 1
 fi
 
 # 📌 Importer la base de données
-if [[ -n "$LATEST_DB_BACKUP" ]]; then
-    echo "📥 Importation de la base de données dans $CONTAINER_NAME..."
-    cat "$LATEST_DB_BACKUP" | docker exec -i "$CONTAINER_NAME" psql -U app -d app
+echo "📥 Importation en cours..."
+docker exec -i "$CONTAINER_NAME" psql -U "$PG_USER" -d "$DB_NAME" < "$SELECTED_FILE"
 
-    if [[ $? -eq 0 ]]; then
-        echo "✅ Base de données restaurée avec succès."
-    else
-        echo "❌ Erreur lors de l'importation de la base de données."
-        exit 1
-    fi
+if [[ $? -eq 0 ]]; then
+    echo "✅ Importation terminée avec succès."
 else
-    echo "⚠️ Aucun fichier de sauvegarde de base de données trouvé."
+    echo "❌ Erreur lors de l'importation."
+    exit 1
 fi
 
-# 📌 Restaurer le dossier public/uploads
-if [[ -n "$LATEST_UPLOADS_BACKUP" ]]; then
-    echo "📦 Restauration du dossier public/uploads..."
-    unzip -o "$LATEST_UPLOADS_BACKUP" -d ./
+# 📌 Restaurer les fichiers uploadés si un fichier ZIP est trouvé
+UPLOAD_ZIP="uploads_backup_${DB_NAME}_*.zip"
+UPLOAD_ZIP_FILE=$(ls $UPLOAD_ZIP 2>/dev/null | head -n 1)
 
-    if [[ $? -eq 0 ]]; then
-        echo "✅ Uploads restaurés avec succès."
+if [[ -n "$UPLOAD_ZIP_FILE" ]]; then
+    echo "📦 Détection d'une sauvegarde des fichiers uploads : $UPLOAD_ZIP_FILE"
+    read -p "⚠️  Veux-tu restaurer les fichiers uploads ? (oui/non) : " CONFIRM_UPLOADS
+    if [[ "$CONFIRM_UPLOADS" == "oui" ]]; then
+        unzip -o "$UPLOAD_ZIP_FILE" -d .
+        echo "✅ Fichiers uploads restaurés."
     else
-        echo "❌ Erreur lors de la restauration des fichiers uploads."
-        exit 1
+        echo "⚠️  Restauration des fichiers uploads annulée."
     fi
 else
     echo "⚠️ Aucun fichier de sauvegarde d'uploads trouvé."
