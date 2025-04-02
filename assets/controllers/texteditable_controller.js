@@ -16,6 +16,9 @@ import Marker from '@editorjs/marker';
 import Strikethrough from '@sotaproject/strikethrough';
 import Tooltip from '../scripts/editorjs/tooltip.js';
 import initializeTooltips from '../scripts/tippy.js';
+import getEnvEditorjs from '../scripts/getEnvEditorjs.js';
+
+const interditPlugins = await getEnvEditorjs();
 
 
 import { Modal } from 'bootstrap';
@@ -112,7 +115,7 @@ export default class extends Controller {
     }
 
     getEditorTools() {
-        return {
+        let listTools = {
             header: {
                 class: Header,
                 config: {
@@ -191,6 +194,16 @@ export default class extends Controller {
 
 
         };
+        //on retire les plugins interdit
+        listTools = Object.keys(listTools).reduce((acc, key) => {
+            if (!interditPlugins.includes(key)) {
+                acc[key] = listTools[key];
+            }
+            return acc;
+        }, {});
+
+        console.log(listTools);
+        return listTools;
     }
 
     async saveContent() {

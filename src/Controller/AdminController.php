@@ -12,11 +12,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use ReflectionClass;
 use Symfony\Component\Serializer\SerializerInterface;
-use Durlecode\EJSParser\Parser;
-use App\Service\EditorJsParser;
-use Symfony\Component\DependencyInjection\Loader\Configurator\twig;
-use Twig\TwigTest;
 use Twig\Environment;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\DependencyInjection\EnvVarLoaderInterface;
 
 #[Route('/admin', name: 'admin_')]
 #[IsGranted('ROLE_ADMIN')]
@@ -178,7 +176,7 @@ class AdminController extends AbstractController
         return $this->redirectToRoute('admin_list_entities', ['entity' => $entity]);
     }
     #[Route('/get/{entity}/{id}/{field}', name: 'get_entity', methods: ['GET'])]
-    public function getDatasOfObjet(string $entity, string $id, string $field, EntityManagerInterface $em, Environment $twig): Response
+    public function getDatasOfObjet(string $entity, string $id, string $field, EntityManagerInterface $em): Response
     {
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
         $entity = $em->getRepository($entityClass)->find($id);
@@ -188,8 +186,15 @@ class AdminController extends AbstractController
         $blocks = $content['blocks'] ?? [];
         foreach ($blocks as $number => $block) {
             $templatePath = "editorjs/blocks/{$block['type']}.html.twig";
+            //en mode dev
+            if (($this->getParameter('kernel.environment') === 'prod' and  !file_exists('/app/templates/' . $templatePath)) or (in_array($block['type'], \explode(',', $_ENV['EDITORJS_PLUGINS_INTERDITS'])))) {
+                //on le supprime
+                unset($blocks[$number]);
+                //et on passe
+                continue;
+            } else
             if (!file_exists('/app/templates/' . $templatePath)) {
-                //modification du bloc en bloc inconnu
+                //modification du bloc en bloc inconnu si en prod
                 $blocks[$number]['type'] = 'unknown-' . $block['type'];
             }
         }
@@ -197,7 +202,16 @@ class AdminController extends AbstractController
             'blocks' => $blocks
         ])->getContent());
     }
-
+    #[Route('/getEnvEditorjs', name: 'get_env', methods: ['GET'])]
+    public function getEnvEditorjs(): Response
+    {
+        return new Response(json_encode(\explode(',', $_ENV['EDITORJS_PLUGINS_INTERDITS'])));
+    }
+    #[Route('/getEnvMode', name: 'get_env_mode', methods: ['GET'])]
+    public function getEnvMode(): Response
+    {
+        return new Response(json_encode(\explode(',', $_ENV['APP_ENV'])));
+    }
 
     private function getEntitiesName()
     {

@@ -4,6 +4,7 @@ import 'highlight.js/styles/github.css';
 import BigPicture from 'bigpicture';
 import initializeTooltips from '../scripts/tippy.js';
 
+
 export default class extends Controller {
     static values = {
         url: String,
