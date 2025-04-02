@@ -12,9 +12,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use ReflectionClass;
 use Symfony\Component\Serializer\SerializerInterface;
-use Twig\Environment;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\DependencyInjection\EnvVarLoaderInterface;
 
 #[Route('/admin', name: 'admin_')]
 #[IsGranted('ROLE_ADMIN')]
@@ -187,7 +184,7 @@ class AdminController extends AbstractController
         foreach ($blocks as $number => $block) {
             $templatePath = "editorjs/blocks/{$block['type']}.html.twig";
             //en mode dev
-            if (($this->getParameter('kernel.environment') === 'prod' and  !file_exists('/app/templates/' . $templatePath)) or (in_array($block['type'], \explode(',', $_ENV['EDITORJS_PLUGINS_INTERDITS'])))) {
+            if (($this->getParameter('kernel.environment') === 'prod' and  !file_exists('/app/templates/' . $templatePath)) or (in_array($block['type'], \explode(',', isset($_ENV['EDITORJS_PLUGINS_INTERDITS']) ? $_ENV['EDITORJS_PLUGINS_INTERDITS'] : '')))) {
                 //on le supprime
                 unset($blocks[$number]);
                 //et on passe
