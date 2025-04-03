@@ -4,6 +4,7 @@
 namespace App\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Util\Json;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -200,14 +201,14 @@ class AdminController extends AbstractController
         ])->getContent());
     }
     #[Route('/getEnvEditorjs', name: 'get_env', methods: ['GET'])]
-    public function getEnvEditorjs(): Response
+    public function getEnvEditorjs(): JsonResponse
     {
-        return new Response(json_encode(\explode(',', $_ENV['EDITORJS_PLUGINS_INTERDITS'])));
+        return new JsonResponse(\explode(',', $_ENV['EDITORJS_PLUGINS_INTERDITS'] ?? ''));
     }
     #[Route('/getEnvMode', name: 'get_env_mode', methods: ['GET'])]
-    public function getEnvMode(): Response
+    public function getEnvMode(): JsonResponse
     {
-        return new Response(json_encode(\explode(',', $_ENV['APP_ENV'])));
+        return new JsonResponse(\explode(',', $_ENV['APP_ENV']));
     }
 
     private function getEntitiesName()
