@@ -7,7 +7,7 @@ fi
 
 # Lire les fichiers et dossiers à ignorer depuis .gitignore
 # Ajouter .git, .env et Caddyfile par défaut
-IGNORED_PATTERNS=(".git" ".env" "Caddyfile" "compose.yaml" ".env.dev" )
+IGNORED_PATTERNS=(".git" ".env" "Caddyfile" "compose.yaml" ".env.dev" ".ignore")
 for ignore_file in .gitignore .ignore; do
     if [ -f "$ignore_file" ]; then
         while IFS= read -r line; do
@@ -80,13 +80,28 @@ for file in "${BASE_CLEAN[@]}"; do
     fi
 done
 
+
+IGNORE_FILE=".ignore"
+FILTERED_FILES=()
+
+# Read ignored files from .ignore
+if [ -f "$IGNORE_FILE" ]; then
+    mapfile -t IGNORE_LIST < "$IGNORE_FILE"
+fi
+
 # Trouver les fichiers ajoutés (dans le répertoire courant mais pas dans base)
 for file in "${CURRENT_CLEAN[@]}"; do
     if ! printf '%s\n' "${BASE_CLEAN[@]}" | grep -q "^$file$"; then
+        if printf '%s\n' "${IGNORE_LIST[@]}" | grep -q "^$file$"; then
+            continue
+        fi
         echo "Ajouter: $file"
         ADDED_FILES+=("$file")
     fi
 done
+
+
+
 
 # Trouver les fichiers modifiés (dans les deux mais différents)
 for file in "${BASE_CLEAN[@]}"; do
