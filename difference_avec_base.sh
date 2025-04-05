@@ -7,7 +7,7 @@ fi
 
 # Lire les fichiers et dossiers à ignorer depuis .gitignore
 # Ajouter .git, .env et Caddyfile par défaut
-IGNORED_PATTERNS=(".git" ".env" "Caddyfile" "compose.yaml" ".env.dev" ".ignore")
+IGNORED_PATTERNS=(".git" ".env" "Caddyfile" "compose.yaml" ".env.dev" ".ignore" "compose.override.yaml" "README.md")
 for ignore_file in .gitignore .ignore; do
     if [ -f "$ignore_file" ]; then
         while IFS= read -r line; do
