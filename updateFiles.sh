@@ -4,7 +4,7 @@
 PROJECT_NAME=$(basename "$PWD")
 NUMPORT=$(shuf -i 8000-8999 -n 1)
 # Fichiers à modifier
-FILES=("Caddyfile" "compose.yaml" "compose.override.yaml")
+FILES=("Caddyfile" "compose.yaml" "compose.override.yaml" ".env" ".env.dev")
 
 # Vérifier si les fichiers existent avant modification
 for FILE in "${FILES[@]}"; do
