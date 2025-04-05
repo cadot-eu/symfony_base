@@ -1,4 +1,3 @@
-
 services:
   base:
     image: symfonymick-dev_gd-imagick-pdo_pgsql
@@ -14,14 +13,13 @@ services:
 ###> doctrine/doctrine-bundle ###
   database:
     container_name: base-db
-    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_DB: dbbase
+      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: base
     healthcheck:
-      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
+      test: ["CMD", "pg_isready", "-d", "dbbase", "-U", "base"]
       timeout: 5s
       retries: 5
       start_period: 60s
