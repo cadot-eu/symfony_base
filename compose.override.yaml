@@ -1,13 +1,13 @@
 
 services:
 ###> doctrine/doctrine-bundle ###
-  database:
+  DIRECTORY-db:
     ports:
       - "5432"
 ###< doctrine/doctrine-bundle ###
 
 ###> symfony/mailer ###
-  mailer:
+  DIRECTORY-mailer:
     container_name: base-mailer
     image: axllent/mailpit
     ports:

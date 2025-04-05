@@ -1,7 +1,7 @@
 services:
-  base:
+  DIRECTORY:
     image: symfonymick-dev_gd-imagick-pdo_pgsql
-    container_name: base
+    container_name: DIRECTORY
     volumes:
       - .:/app
       - ./var/log/nginx:/var/log/nginx
@@ -9,27 +9,27 @@ services:
       - ./var/log/supervisor:/var/log/supervisor
     restart: always
     ports:
-      - 23407:80
+      - NUMPORT:80
 ###> doctrine/doctrine-bundle ###
-  database:
-    container_name: base-db
+  DIRECTORY-db:
+    container_name: DIRECTORY-db
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: dbbase
+      POSTGRES_DB: dbDIRECTORY
       POSTGRES_PASSWORD: pass
-      POSTGRES_USER: base
+      POSTGRES_USER: DIRECTORY
     healthcheck:
-      test: ["CMD", "pg_isready", "-d", "dbbase", "-U", "base"]
+      test: ["CMD", "pg_isready", "-d", "dbDIRECTORY", "-U", "DIRECTORY"]
       timeout: 5s
       retries: 5
       start_period: 60s
     volumes:
-      - database_data:/var/lib/postgresql/data:rw
+      - database_data-DIRECTORY:/var/lib/postgresql/data:rw
       # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
       # - ./docker/db/data:/var/lib/postgresql/data:rw
 ###< doctrine/doctrine-bundle ###
 
 volumes:
 ###> doctrine/doctrine-bundle ###
-  database_data:
+  database_data-DIRECTORY:
 ###< doctrine/doctrine-bundle ###
