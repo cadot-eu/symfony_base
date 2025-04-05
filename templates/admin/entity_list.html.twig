@@ -1,8 +1,3 @@
-{% if (objects[0].fieldsCrud)|default == ''  %}
-	<div class="alert alert-warning" role="alert">
-		L'entité n'a pas de méthode fieldsCrud.
-	</div>
-{% endif %}
 <div class="d-flex justify-content-end mb-2">
 	{% if parent  is null %}
 		<form method="post" action="{{ path('admin_create_entity', {'entity': entity}) }}">
@@ -13,81 +8,87 @@
 			{{parent}}</a>
 	{% endif %}
 </div>
-<table class="table table-striped">
-	<thead>
-		<tr>
-			<th>ID</th>
-			{% for field in objects[0].fieldsCrud|default %}
-				<th>{{ field }}</th>
-			{% endfor %}
-			{% for association in associations %}
-				<th>{{ association.fieldName }}</th>
-			{% endfor %}
-			<th>Actions</th>
-		</tr>
-	</thead>
-	<tbody>
-		{% for object in objects %}
-			<tr id="ligne_{{ object.id }}">
-				<td>{{ object.id }}</td>
+{% if objects is not empty %}
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>ID</th>
 				{% for field in objects[0].fieldsCrud|default %}
-					{# initialisation #}
-					{% if field|slice(-1) == '*' %}
-						{% set champ = field|slice(0, -1) %}
-						{% set type = objectsType[champ] %}
-						{% set texte=attribute(object, champ)|raw %}
-						{% if type == "text" %}
-							<td>
-								<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(object, champ)}}" data-texteditable-url-value="{{ path('admin_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
-									<span class="bi bi-pencil"></span>
-								</button>
-								<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('admin_get_entity', {'entity': entity, 'id': object.id,'field': champ })}}">
-									<i class="bi bi-search"></i>
-								</button>
-							</td>
-						{% elseif type == "html" %}
-							<td>html</td>
-						{% else %}
-							<td contenteditable="true" data-controller="editable" data-editable-url-value="{{ path('admin_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
-						{% endif %}
-					{% else %}
-						{% set champ = field %}
-						{% set texte=attribute(object, champ)|raw %}
-						{% if texte|length > 25 %}
-							<td>
-								<span data-controller="tooltip" data-tooltip-html-value="{{texte}}">{{texte|u.truncate(8, '...')}}</span>
-							</td>
-						{% else %}
-							<td>{{ texte }}</td>
-						{% endif %}
-					{% endif %}
+					<th>{{ field }}</th>
 				{% endfor %}
-				{% for entityParent,association in associations %}
-					{% set typeAssociation = constant('class',association)|split('\\')|last %}
-					<td>
-						{% for item in attribute(object, association.fieldName) %}
-							<a href="{{ path('admin_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}">
-								{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
-							</a>
-						{% endfor %}
-						{% if typeAssociation != "ManyToOneAssociationMapping"  %}
-							<form method="post" class="d-inline" action="{{ path('admin_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}">
-								<button type="submit" class="btn btn-xs no-button">
-									<i class="bi bi-plus"></i>
-								</button>
-							</form>
-						{% else %}
-							{% set item = attribute(object, association.fieldName) %}
-							{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
-						{% endif %}
-					</td>
+				{% for association in associations %}
+					<th>{{ association.fieldName }}</th>
 				{% endfor %}
-				<td>
-					<button class="btn btn-danger btn-sm" data-controller="form" data-form-confirmation-value="true" data-form-parent-value="#ligne_{{ object.id }}" data-form-url-value="{{ path('admin_delete_entity', {'entity': entity, 'id': object.id })}}" data-form-method-value="DELETE">Supprimer</button>
-				</td>
-
-
+				<th>Actions</th>
 			</tr>
-		{% endfor %}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			{% for object in objects %}
+				<tr id="ligne_{{ object.id }}">
+					<td>{{ object.id }}</td>
+					{% for field in objects[0].fieldsCrud|default %}
+						{# initialisation #}
+						{% if field|slice(-1) == '*' %}
+							{% set champ = field|slice(0, -1) %}
+							{% set type = objectsType[champ] %}
+							{% set texte=attribute(object, champ)|raw %}
+							{% if type == "text" %}
+								<td>
+									<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(object, champ)}}" data-texteditable-url-value="{{ path('admin_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+										<span class="bi bi-pencil"></span>
+									</button>
+									<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('admin_get_entity', {'entity': entity, 'id': object.id,'field': champ })}}">
+										<i class="bi bi-search"></i>
+									</button>
+								</td>
+							{% elseif type == "html" %}
+								<td>html</td>
+							{% elseif type == "date" %}
+								<td>
+									<input type="date" value="{{texte|date('d/m/Y')}}">
+								</td>
+							{% else %}
+								<td contenteditable="true" data-controller="editable" data-editable-url-value="{{ path('admin_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
+							{% endif %}
+						{% else %}
+							{% set champ = field %}
+							{% set texte=attribute(object, champ)|raw %}
+							{% if texte|length > 25 %}
+								<td>
+									<span data-controller="tooltip" data-tooltip-html-value="{{texte}}">{{texte|u.truncate(8, '...')}}</span>
+								</td>
+							{% else %}
+								<td>{{ texte }}</td>
+							{% endif %}
+						{% endif %}
+					{% endfor %}
+					{% for entityParent,association in associations %}
+						{% set typeAssociation = constant('class',association)|split('\\')|last %}
+						<td>
+							{% for item in attribute(object, association.fieldName) %}
+								<a href="{{ path('admin_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}">
+									{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
+								</a>
+							{% endfor %}
+							{% if typeAssociation != "ManyToOneAssociationMapping"  %}
+								<form method="post" class="d-inline" action="{{ path('admin_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}">
+									<button type="submit" class="btn btn-xs no-button">
+										<i class="bi bi-plus"></i>
+									</button>
+								</form>
+							{% else %}
+								{% set item = attribute(object, association.fieldName) %}
+								{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
+							{% endif %}
+						</td>
+					{% endfor %}
+					<td>
+						<button class="btn btn-danger btn-sm" data-controller="form" data-form-confirmation-value="true" data-form-parent-value="#ligne_{{ object.id }}" data-form-url-value="{{ path('admin_delete_entity', {'entity': entity, 'id': object.id })}}" data-form-method-value="DELETE">Supprimer</button>
+					</td>
+
+
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endif %}
