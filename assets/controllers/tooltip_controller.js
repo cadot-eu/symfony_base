@@ -22,15 +22,15 @@ export default class extends Controller {
     `;
       document.body.appendChild(this.modalElement);
 
-      // Initialiser le modal Bootstrap
-      this.bootstrapModal = new Modal(this.modalElement);
-      this.modalElement.addEventListener('mousemove', () => {
-        this.bootstrapModal.hide();
-      })
-      // Ajouter l'événement de survol
-      this.element.addEventListener('mouseover', () => {
-        this.bootstrapModal.show();
-      });
+      // // Initialiser le modal Bootstrap
+      // this.bootstrapModal = new Modal(this.modalElement);
+      // this.modalElement.addEventListener('mousemove', () => {
+      //   this.bootstrapModal.hide();
+      // })
+      // // Ajouter l'événement de survol
+      // this.element.addEventListener('mouseover', () => {
+      //   this.bootstrapModal.show();
+      // });
 
     }
   }

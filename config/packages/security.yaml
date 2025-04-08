@@ -19,7 +19,10 @@ security:
             form_login:
                 login_path: app_login
                 check_path: app_login
-                enable_csrf: true
+                default_target_path: admin_dashboard
+                always_use_default_target_path: false
+                use_referer: true
+                failure_path: app_login
             logout:
                 path: app_logout
                 # target: app_any_route
