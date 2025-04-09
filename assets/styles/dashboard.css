@@ -1,0 +1,26 @@
+body {
+    background-color: rgb(135, 235, 158);
+}
+
+.nobutton {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-xs {
+    padding: .35rem .4rem;
+    font-size: .875rem;
+    line-height: .5;
+    border-radius: .2rem;
+}
+
+.alert-error {
+    color: #ff0019;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    text-align: center;
+}

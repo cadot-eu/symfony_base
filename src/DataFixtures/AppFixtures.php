@@ -32,7 +32,17 @@ class AppFixtures extends Fixture
         $manager->persist($user);
         $manager->flush();
 
-
+        $user = new User();
+        $user->setRoles(['ROLE_SUPERADMIN']);
+        $user->setEmail('superadmin@aa.aa');
+        $user->setNom('superadmin');
+        $user->setPrenom('super_administrateur');
+        $hashedPassword = $this->passwordHasher->hashPassword(
+            $user,
+            '*'
+        );
+        $user->setPassword($hashedPassword);
+        $manager->persist($user);
         $manager->flush();
     }
 }

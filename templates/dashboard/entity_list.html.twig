@@ -1,10 +1,10 @@
 <div class="d-flex justify-content-end mb-2">
 	{% if parent  is null %}
-		<form method="post" action="{{ path('admin_create_entity', {'entity': entity}) }}">
+		<form method="post" action="{{ path('dashboard_create_entity', {'entity': entity}) }}">
 			<button type="submit" class="btn btn-primary">Ajouter</button>
 		</form>
 	{% else %}
-		<a href="{{ path('admin_list_entities', {'entity': parent }) }}" class="btn btn-primary">Retour vers le Parent
+		<a href="{{ path('dashboard_list_entities', {'entity': parent }) }}" class="btn btn-primary">Retour vers le Parent
 			{{parent}}</a>
 	{% endif %}
 </div>
@@ -23,7 +23,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{% for object in objects %}
+			{% for object in objects|sort %}
 				<tr id="ligne_{{ object.id }}">
 					<td>{{ object.id }}</td>
 					{% for field in objects[0].fieldsCrud|default %}
@@ -34,10 +34,10 @@
 							{% set texte=attribute(object, champ)|raw %}
 							{% if type == "text" %}
 								<td>
-									<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(object, champ)}}" data-texteditable-url-value="{{ path('admin_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+									<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(object, champ)}}" data-texteditable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
 										<span class="bi bi-pencil"></span>
 									</button>
-									<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('admin_get_entity', {'entity': entity, 'id': object.id,'field': champ })}}">
+									<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('dashboard_get_entity', {'entity': entity, 'id': object.id,'field': champ })}}">
 										<i class="bi bi-search"></i>
 									</button>
 								</td>
@@ -48,7 +48,7 @@
 									<input type="date" value="{{texte|date('d/m/Y')}}">
 								</td>
 							{% else %}
-								<td contenteditable="true" data-controller="editable" data-editable-url-value="{{ path('admin_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
+								<td contenteditable="true" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
 							{% endif %}
 						{% else %}
 							{% set champ = field %}
@@ -66,12 +66,12 @@
 						{% set typeAssociation = constant('class',association)|split('\\')|last %}
 						<td>
 							{% for item in attribute(object, association.fieldName) %}
-								<a href="{{ path('admin_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}">
+								<a href="{{ path('dashboard_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}">
 									{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
 								</a>
 							{% endfor %}
 							{% if typeAssociation != "ManyToOneAssociationMapping"  %}
-								<form method="post" class="d-inline" action="{{ path('admin_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}">
+								<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}">
 									<button type="submit" class="btn btn-xs no-button">
 										<i class="bi bi-plus"></i>
 									</button>
@@ -83,7 +83,7 @@
 						</td>
 					{% endfor %}
 					<td>
-						<button class="btn btn-danger btn-sm" data-controller="form" data-form-confirmation-value="true" data-form-parent-value="#ligne_{{ object.id }}" data-form-url-value="{{ path('admin_delete_entity', {'entity': entity, 'id': object.id })}}" data-form-method-value="DELETE">Supprimer</button>
+						<button class="btn btn-danger btn-sm" data-controller="form" data-form-confirmation-value="true" data-form-parent-value="#ligne_{{ object.id }}" data-form-url-value="{{ path('dashboard_delete_entity', {'entity': entity, 'id': object.id })}}" data-form-method-value="DELETE">Supprimer</button>
 					</td>
 
 

@@ -1,5 +1,4 @@
 <?php
-// src/Controller/AdminController.php
 
 namespace App\Controller;
 
@@ -9,13 +8,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use ReflectionClass;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-#[Route('/admin', name: 'admin_')]
-#[IsGranted('ROLE_ADMIN')]
-class AdminController extends AbstractController
+#[Route('/dashboard', name: 'dashboard_')]
+class DashboardController extends AbstractController
 {
     private $em;
     public function __construct(EntityManagerInterface $em)
@@ -23,11 +21,11 @@ class AdminController extends AbstractController
         $this->em = $em;
     }
 
-    #[Route('/', name: 'dashboard')]
-    public function index(EntityManagerInterface $em): Response
+    #[Route('/', name: 'index')]
+    public function index(EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): Response
     {
         return $this->render(
-            'admin/dashboard.html.twig',
+            'dashboard/index.html.twig',
             ['entities' => $this->getEntitiesName()]
         );
     }
@@ -78,7 +76,7 @@ class AdminController extends AbstractController
             }
         }
 
-        return $this->render('admin/dashboard.html.twig', [
+        return $this->render('dashboard/index.html.twig', [
             'objects' => $objects,
             'objectsType' => $objectsType,
             'entity' => $entity,
@@ -102,7 +100,7 @@ class AdminController extends AbstractController
 
         return new JsonResponse(['success' => true]);
     }
-    //admin_create_entity
+    //dashboard_create_entity
     #[Route('/create/{entity}', name: 'create_entity', methods: ['POST'])]
     #[Route('/create/{entity}/{entityParentId}', name: 'create_child_entity', methods: ['POST'])]
     public function createEntity(string $entity, string $entityParentId = null, EntityManagerInterface $em, SerializerInterface $serializer): Response
@@ -170,7 +168,7 @@ class AdminController extends AbstractController
         }
         $em->persist($entityN);
         $em->flush();
-        return $this->redirectToRoute('admin_list_entities', ['entity' => $entity]);
+        return $this->redirectToRoute('dashboard_dashboard_list_entities', ['entity' => $entity]);
     }
     #[Route('/get/{entity}/{id}/{field}', name: 'get_entity', methods: ['GET'])]
     public function getDatasOfObjet(string $entity, string $id, string $field, EntityManagerInterface $em): Response
