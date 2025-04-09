@@ -144,3 +144,6 @@ if [ ${#ADDED_FILES[@]} -gt 0 ] || [ ${#MODIFIED_FILES[@]} -gt 0 ] || [ ${#DELET
 else
     echo "Aucune différence trouvée entre le répertoire actuel et ../base."
 fi
+cd ..
+cd base
+gcp "maj" -p
