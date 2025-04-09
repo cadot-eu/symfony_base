@@ -1,74 +1,78 @@
 #!/bin/bash
+
 # Vérifier si le répertoire ../base existe
 if [ ! -d "../base" ]; then
     echo "Le répertoire ../base n'existe pas."
     exit 1
 fi
 
-# Lire les fichiers et dossiers à ignorer depuis .gitignore
-# Ajouter .git, .env et Caddyfile par défaut
-IGNORED_PATTERNS=(".git" ".env" "Caddyfile" "compose.yaml" ".env.dev")
-if [ -f .gitignore ]; then
+# Créer un tableau pour stocker les fichiers à ignorer
+IGNORED_FILES=()
+
+# Lire les fichiers à ignorer depuis .ignore s'il existe
+if [ -f ".ignore" ]; then
     while IFS= read -r line; do
         # Ignorer les commentaires et lignes vides
         [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
-        # Nettoyer le motif
-        clean_pattern="${line#/}"  # Supprimer le / initial
-        IGNORED_PATTERNS+=("$clean_pattern")
-    done < .gitignore
+        IGNORED_FILES+=("$line")
+    done < .ignore
 fi
 
-# Fonction pour vérifier si un fichier ou un dossier doit être ignoré
+# Fonction pour vérifier si un fichier doit être ignoré
 should_ignore() {
     local file="$1"
     
-    for pattern in "${IGNORED_PATTERNS[@]}"; do
-        # Gérer les motifs avec jokers (*)
-        if [[ "$pattern" == *"*"* ]]; then
-            # Convertir le motif .gitignore en motif glob
-            glob_pattern="${pattern//\*/*}"
-            if [[ "$file" == $glob_pattern || "$file" == *"/$glob_pattern" ]]; then
-                return 0
-            fi
-            # Gérer les motifs de dossiers (qui se terminent par /)
-            elif [[ "$pattern" == *"/" ]]; then
-            dir_pattern="${pattern%/}"
-            if [[ "$file" == "$dir_pattern"/* || "$file" == "$dir_pattern" ]]; then
-                return 0
-            fi
-            # Motifs normaux
-            elif [[ "$file" == "$pattern" || "$file" == *"/$pattern" || "$file" == .git/* ]]; then
-            return 0
+    # Ignorer le répertoire .git et ses sous-répertoires
+    if [[ "$file" == .git/* || "$file" == .git ]]; then
+        return 0  # Le fichier doit être ignoré
+    fi
+    
+    for ignored in "${IGNORED_FILES[@]}"; do
+        if [[ "$file" == "$ignored" ]]; then
+            return 0  # Le fichier doit être ignoré
         fi
     done
     
-    return 1
+    return 1  # Le fichier ne doit pas être ignoré
 }
 
-# Stocker tous les fichiers dans un tableau plutôt qu'utiliser un pipe
-mapfile -t BASE_FILES < <(find "../base" -type f)
-
-# Traiter chaque fichier
-for base_file in "${BASE_FILES[@]}"; do
+# Parcourir tous les fichiers du répertoire ../base (en excluant .git au niveau de find)
+find "../base" -type f -not -path "../base/.git/*" -not -path "../base/vendor/*" -not -path "../base/public/assets/*" -not -path "../base/assets/vendor/*" -not -name ".env"  -not -name "compose.yaml" -not -name "compose.override.yaml" -not -name "Caddyfile" -not -name ".phpunit.result*" -not -name ".env.dev" -not -name ".ignore"| while read -r base_file; do
+    # Extraire le chemin relatif
     rel_path="${base_file#../base/}"
-    target_file="./$rel_path"
     
-    # Vérifier si le fichier ou son dossier parent est ignoré
+    # Vérifier si le fichier doit être ignoré
     if should_ignore "$rel_path"; then
+        echo "Ignoré: $rel_path"
         continue
     fi
     
-    if [ ! -e "$target_file" ] || ! cmp -s "$base_file" "$target_file"; then
-        echo "Le fichier $rel_path est différent ou manquant."
-        read -p "Copier depuis base ? (O/n) " response
-        response=${response,,}  # Mettre en minuscule
-        
+    # Chemin du fichier dans le répertoire courant
+    current_file="./$rel_path"
+    
+    if [ -f "$current_file" ]; then
+        # Le fichier existe dans le répertoire courant, vérifier s'il est différent
+        if ! cmp -s "$base_file" "$current_file"; then
+            echo "Le fichier $rel_path est différent, Remplacer la version locale ? (O/n) "
+            read -r response </dev/tty  # Force la lecture depuis le terminal
+            response=${response,,} # Mettre en minuscule
+            if [[ -z "$response" || "$response" == "o" || "$response" == "y" ]]; then
+                cp "$base_file" "$current_file"
+                echo "$rel_path remplacé."
+            fi
+        fi
+    else
+        # Le fichier n'existe pas dans le répertoire courant
+        echo "Le fichier $rel_path n'existe pas, copier depuis ../base ? (O/n) " response
+        read -r response </dev/tty
+        response=${response,,} # Mettre en minuscule
         if [[ -z "$response" || "$response" == "o" || "$response" == "y" ]]; then
-            mkdir -p "$(dirname "$target_file")"
-            cp "$base_file" "$target_file"
+            # Créer les répertoires parents si nécessaire
+            mkdir -p "$(dirname "$current_file")"
+            cp "$base_file" "$current_file"
             echo "$rel_path copié."
         fi
     fi
 done
 
-echo "Mise à jour des fichiers terminée. Pensez à lancer refresh.sh."
+echo "Synchronisation terminée."

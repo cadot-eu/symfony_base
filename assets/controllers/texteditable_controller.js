@@ -18,8 +18,7 @@ import Tooltip from '../scripts/editorjs/tooltip.js';
 import initializeTooltips from '../scripts/tippy.js';
 import getEnvEditorjs from '../scripts/getEnvEditorjs.js';
 
-const interditPlugins = await getEnvEditorjs();
-
+const interditPlugins = await getEnvEditorjs.fetchEnv();
 
 import { Modal } from 'bootstrap';
 import flasher from '@flasher/flasher';
