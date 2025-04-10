@@ -1,5 +1,5 @@
 
-export default async function fetchEnv() {
+async function fetchEnv() {
     try {
         const response = await fetch('/admin/getEnvMode');
         if (!response.ok) {
@@ -11,3 +11,4 @@ export default async function fetchEnv() {
     }
 }
 
+export { fetchEnv };

@@ -18,7 +18,7 @@ import Tooltip from '../scripts/editorjs/tooltip.js';
 import initializeTooltips from '../scripts/tippy.js';
 import { fetchEnv } from '../scripts/getEnvEditorjs.js';
 
-const interditPlugins = await fetchEnv()
+
 
 import { Modal } from 'bootstrap';
 import flasher from '@flasher/flasher';
@@ -30,7 +30,8 @@ export default class extends Controller {
         url: String
     }
 
-    connect() {
+    async connect() {
+        this.interditPlugins = await fetchEnv();
         this.element.addEventListener('click', () => this.openEditor());
     }
 
@@ -195,11 +196,12 @@ export default class extends Controller {
         };
         //on retire les plugins interdit
         listTools = Object.keys(listTools).reduce((acc, key) => {
-            if (!interditPlugins.includes(key)) {
+            if (!this.interditPlugins.includes(key)) {
                 acc[key] = listTools[key];
             }
             return acc;
         }, {});
+
 
         console.log(listTools);
         return listTools;

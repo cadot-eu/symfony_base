@@ -1,6 +1,6 @@
 async function fetchEnv() {
     try {
-        const response = await fetch('/dashboard/getEnvEditorjs');
+        const response = await fetch('/admin/getEnvEditorjs');
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
