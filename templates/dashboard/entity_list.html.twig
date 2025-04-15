@@ -47,6 +47,14 @@
 								<td>
 									<input type="date" value="{{texte|date('d/m/Y')}}">
 								</td>
+							{% elseif type == "enum" %}
+								<td>
+									<select data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+										{% for case,valeur in objectsValues[champ] %}
+											<option name="{{case}}" value="{{valeur}}" {% if valeur == attribute(object, champ).value %} selected {% endif %}>{{valeur}}</option>
+										{% endfor %}
+									</select>
+								</td>
 							{% else %}
 								<td contenteditable="true" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
 							{% endif %}

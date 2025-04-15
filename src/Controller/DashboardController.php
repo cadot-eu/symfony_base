@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\GetRenderService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,9 +41,15 @@ class DashboardController extends AbstractController
         }
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
         $entity = $em->getRepository($entityClass)->find($id);
-
         $setter = 'set' . ucfirst($field);
-        $entity->$setter($data['value']);
+        $metadata = $em->getClassMetadata($entityClass);
+        $fieldMapping = $metadata->getFieldMapping($field);
+        $value = $data['value'];
+        if (isset($fieldMapping['enumType'])) {
+            $enumClass = $metadata->getFieldMapping($field)['enumType'];
+            $value = constant($enumClass . '::' . $data['value']);
+        }
+        $entity->$setter($value);
         $em->persist($entity);
         $em->flush();
 
@@ -62,9 +69,29 @@ class DashboardController extends AbstractController
         $objects = $repository->findAll();
         //on récupère le type des attributs
         $objectsType = [];
+        $objectsValues = [];
         $metadata = $em->getClassMetadata($entityClass);
         foreach ($metadata->getFieldNames() as $field) {
-            $objectsType[$field] = $metadata->getTypeOfField($field);
+            $fieldMapping = $metadata->getFieldMapping($field);
+            //si c'est un enumtype
+            if (isset($fieldMapping['enumType'])) {
+                $enumClass = $fieldMapping['enumType'];
+
+                // Vérifie si la classe existe et est une enum
+                if (enum_exists($enumClass)) {
+                    // On récupère les valeurs possibles (cas et valeurs)
+                    $values = [];
+
+                    foreach ($enumClass::cases() as $case) {
+                        $values[$case->name] = $case->value;
+                    }
+
+                    $objectsType[$field] = 'enum';
+                    $objectsValues[$field] = $values;
+                }
+            } else {
+                $objectsType[$field] = $metadata->getTypeOfField($field);
+            }
         }
         //on regarde si on a des relations
         $metadata = $em->getClassMetadata($entityClass);
@@ -79,6 +106,7 @@ class DashboardController extends AbstractController
         return $this->render('dashboard/index.html.twig', [
             'objects' => $objects,
             'objectsType' => $objectsType,
+            'objectsValues' => $objectsValues,
             'entity' => $entity,
             'entities' => $this->getEntitiesName(),
             'associations' => $associations,
@@ -171,31 +199,9 @@ class DashboardController extends AbstractController
         return $this->redirectToRoute('dashboard_dashboard_list_entities', ['entity' => $entity]);
     }
     #[Route('/get/{entity}/{id}/{field}', name: 'get_entity', methods: ['GET'])]
-    public function getDatasOfObjet(string $entity, string $id, string $field, EntityManagerInterface $em): Response
+    public function getDatasOfObjet(string $entity, string $id, string $field, GetRenderService $getRender): Response
     {
-        $entityClass = 'App\\Entity\\' . ucfirst($entity);
-        $entity = $em->getRepository($entityClass)->find($id);
-        $getter = 'get' . ucfirst($field);
-        $json = $entity->$getter();
-        $content = json_decode($json, true);
-        $blocks = $content['blocks'] ?? [];
-        foreach ($blocks as $number => $block) {
-            $templatePath = "editorjs/blocks/{$block['type']}.html.twig";
-            //en mode dev
-            if (($this->getParameter('kernel.environment') === 'prod' and  !file_exists('/app/templates/' . $templatePath)) or (in_array($block['type'], \explode(',', isset($_ENV['EDITORJS_PLUGINS_INTERDITS']) ? $_ENV['EDITORJS_PLUGINS_INTERDITS'] : '')))) {
-                //on le supprime
-                unset($blocks[$number]);
-                //et on passe
-                continue;
-            } else
-            if (!file_exists('/app/templates/' . $templatePath)) {
-                //modification du bloc en bloc inconnu si en prod
-                $blocks[$number]['type'] = 'unknown-' . $block['type'];
-            }
-        }
-        return new Response($this->render('editorjs_render.html.twig', [
-            'blocks' => $blocks
-        ])->getContent());
+        return $getRender->render($entity, $id, $field);
     }
     #[Route('/getEnvEditorjs', name: 'get_env', methods: ['GET'])]
     public function getEnvEditorjs(): JsonResponse

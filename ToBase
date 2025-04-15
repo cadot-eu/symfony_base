@@ -6,7 +6,7 @@ if [ ! -d "../base" ]; then
 fi
 
 # Parcourir les fichiers du répertoire ../base
-find ../base -type f -not -path "../base/.git/*" -not -path "../base/vendor/*" -not -path "../base/public/assets/*" -not -path "../base/assets/vendor/*" -not -name "compose.yaml" -not -name "importmap.php" -not -name "Caddyfile" -not -name ".env" -not -name ".env.dev" -not -name ".ignore" -not -name "compose.override.yaml" -not -name "README.md" -not -name "importmap.json" -not -path "../base/assets/styles/*" | while IFS= read -r file; do
+find ../base -type f -not -path "../base/.git/*" -not -path "../base/vendor/*" -not -path "../base/public/assets/*" -not -path "../base/assets/vendor/*" -not -name "compose.yaml" -not -name "importmap.php" -not -name "Caddyfile" -not -name ".env" -not -name ".env.dev" -not -name ".ignore" -not -name "compose.override.yaml" -not -name "README.md" -not -name "importmap.json" -not -path "../base/assets/styles/*" -not -name ".phpunit.result*" | while IFS= read -r file; do
     # Obtenir le chemin relatif
     rel_path=${file#../base/}
     

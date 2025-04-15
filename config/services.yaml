@@ -16,3 +16,8 @@ services:
             - "../src/DependencyInjection/"
             - "../src/Entity/"
             - "../src/Kernel.php"
+
+    App\Service\GetRenderService:
+        arguments:
+            $em: "@doctrine.orm.entity_manager"
+            $twig: "@twig"
