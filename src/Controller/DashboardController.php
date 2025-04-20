@@ -196,7 +196,7 @@ class DashboardController extends AbstractController
         }
         $em->persist($entityN);
         $em->flush();
-        return $this->redirectToRoute('dashboard_dashboard_list_entities', ['entity' => $entity]);
+        return $this->redirectToRoute('dashboard_list_entities', ['entity' => $entity]);
     }
     #[Route('/get/{entity}/{id}/{field}', name: 'get_entity', methods: ['GET'])]
     public function getDatasOfObjet(string $entity, string $id, string $field, GetRenderService $getRender): Response
