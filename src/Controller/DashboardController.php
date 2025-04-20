@@ -70,10 +70,16 @@ class DashboardController extends AbstractController
         //on récupère le type des attributs
         $objectsType = [];
         $objectsValues = [];
+        $objetsAttributs = [];
         $metadata = $em->getClassMetadata($entityClass);
         foreach ($metadata->getFieldNames() as $field) {
             $fieldMapping = $metadata->getFieldMapping($field);
-            //si c'est un enumtype
+            $reflectionProperty = new \ReflectionProperty($entityClass, $field);
+            foreach ($reflectionProperty->getAttributes() as $attribute) {
+                $objetsAttributs[$field][explode('\\', $attribute->getName())[count(explode('\\', $attribute->getName())) - 1]] = [
+                    'arguments' => $attribute->getArguments(),
+                ];
+            }
             if (isset($fieldMapping['enumType'])) {
                 $enumClass = $fieldMapping['enumType'];
 
@@ -102,11 +108,11 @@ class DashboardController extends AbstractController
                 $parent = $parentNom;
             }
         }
-
         return $this->render('dashboard/index.html.twig', [
             'objects' => $objects,
             'objectsType' => $objectsType,
             'objectsValues' => $objectsValues,
+            'objetsAttributs' => $objetsAttributs,
             'entity' => $entity,
             'entities' => $this->getEntitiesName(),
             'associations' => $associations,

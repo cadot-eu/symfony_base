@@ -14,7 +14,15 @@
 			<tr>
 				<th>ID</th>
 				{% for field in objects[0].fieldsCrud|default %}
-					<th>{{ field }}</th>
+					{% set mot = '' %}
+					{% for letter in field|split('') %}
+						{% if letter == letter|upper  and letter !='*' %}
+							{% set mot = mot ~ ' ' ~ letter|lower %}
+						{% else %}
+							{% set mot = mot ~ letter %}
+						{% endif %}
+					{% endfor %}
+					<th class=" text-center">{{ mot }}</th>
 				{% endfor %}
 				{% for association in associations %}
 					<th>{{ association.fieldName }}</th>
@@ -31,6 +39,7 @@
 						{% if field|slice(-1) == '*' %}
 							{% set champ = field|slice(0, -1) %}
 							{% set type = objectsType[champ] %}
+							{% set attrs = objetsAttributs[champ]%}
 							{% set texte=attribute(object, champ)|raw %}
 							{% if type == "text" %}
 								<td>
@@ -47,6 +56,12 @@
 								<td>
 									<input type="date" value="{{texte|date('d/m/Y')}}">
 								</td>
+							{% elseif type == "integer" %}
+								<td contenteditable="true" data-controller="editable" data-editable-regex-value="^[0-9]*$" data-editable-regex-message-value="Cette valeur doit être un entier" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
+							{% elseif type == "string" and  'Regex' in attrs|keys %}
+								{% set regex = attrs.Regex.arguments.pattern %}
+								{% set message = attrs.Regex.arguments.message %}
+								<td contenteditable="true" data-controller="editable" data-editable-regex-value="{{regex}}" data-editable-regex-message-value="{{message}}" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
 							{% elseif type == "enum" %}
 								<td>
 									<select data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
