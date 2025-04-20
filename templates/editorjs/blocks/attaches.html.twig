@@ -17,14 +17,13 @@
 
 {% set isImage = block.data.file.extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
 {% set icon = isImage ? 'bi-file-earmark-image text-warning' : icons[block.data.file.extension]|default('bi-paperclip text-muted') %}
-
 <div class="card shadow-sm mb-3 editorjs-block-attaches">
 	<div class="card-body d-flex align-items-center">
 		<i class="{{ icon }} me-3 fs-2"></i>
 		<div class="flex-grow-1">
 			<h6 class="card-title mb-0">
 				<a href="{{ block.data.file.url }}" download class="text-decoration-none">
-					{{ block.data.file.name }}
+					{{ (block.data.title|length>4 ? block.data.title : block.data.file.name )|raw }}
 				</a>
 			</h6>
 			<small class="text-muted">{{ (block.data.file.size / 1024)|round(2) }}

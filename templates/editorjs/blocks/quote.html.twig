@@ -1,6 +1,6 @@
 <blockquote class="blockquote text-{{ block.data.alignment }} editorjs-block-quote">
 	<p class="mb-2">{{ block.data.text|raw }}</p>
 	{% if block.data.caption %}
-		<footer class="blockquote-footer">{{ block.data.caption|e }}</footer>
+		<footer class="blockquote-footer">{{ block.data.caption|raw }}</footer>
 	{% endif %}
 </blockquote>
