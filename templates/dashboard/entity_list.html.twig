@@ -40,7 +40,23 @@
 							{% set champ = field|slice(0, -1) %}
 							{% set type = objectsType[champ] %}
 							{% set attrs = objetsAttributs[champ]%}
-							{% set texte=attribute(object, champ)|raw %}
+							{% if type=="date" %}
+								{% if attribute(object, champ)%}
+									{% set texte=attribute(object, champ)|date('Y-m-d') %}
+								{% else %}
+									{% set texte='' %}
+								{% endif %}
+
+							{% elseif type=="datetime" %}
+								{% if attribute(object, champ)%}
+									{% set texte = attribute(object, champ)|date('Y-m-d\\TH:i') %}
+
+								{% else %}
+									{% set texte='' %}
+								{% endif %}
+							{% else %}
+								{% set texte=attribute(object, champ)|raw %}
+							{% endif %}
 							{% if type == "text" %}
 								<td>
 									<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(object, champ)}}" data-texteditable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
@@ -53,8 +69,12 @@
 							{% elseif type == "html" %}
 								<td>html</td>
 							{% elseif type == "date" %}
-								<td>
-									<input type="date" value="{{texte|date('d/m/Y')}}">
+								<td data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+									<input type="date" value="{{texte}}">
+								</td>
+							{% elseif type == "datetime" %}
+								<td data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+									<input type="datetime-local" value="{{texte}}">
 								</td>
 							{% elseif type == "integer" %}
 								<td contenteditable="true" data-controller="editable" data-editable-regex-value="^[0-9]*$" data-editable-regex-message-value="Cette valeur doit être un entier" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
@@ -113,5 +133,5 @@
 				</tr>
 			{% endfor %}
 		</tbody>
-	</table>
-{% endif %}
+	</tbody>
+</table>{% endif %}

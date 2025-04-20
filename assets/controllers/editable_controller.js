@@ -2,6 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 import flasher from '@flasher/flasher';
 
 
+let datePicker = false;
 export default class extends Controller {
     static values = {
         url: String,
@@ -16,6 +17,11 @@ export default class extends Controller {
         if (this.element.tagName == 'SELECT') {
             this.element.addEventListener("change", this.sendUpdate.bind(this));
         }
+        else if (this.element.children[0].tagName == 'INPUT') { //pour les datepicker
+            this.element.children[0].addEventListener("input", this.sendUpdate.bind(this));
+            datePicker = true;
+
+        }
         else {
             //is on a un regex on l'ajoute avec son message
             this.element.addEventListener("blur", this.sendUpdate.bind(this));
@@ -24,11 +30,16 @@ export default class extends Controller {
     }
 
     disconnect() {
-        if (this.element.tagName == 'SELECT') {
-            this.element.removeEventListener("change", this.sendUpdate.bind(this));
+        if (this.element.tagName === 'SELECT') {
+            this.element.removeEventListener("change", this.sendUpdate);
         }
-        else
-            this.element.removeEventListener("blur", this.sendUpdate.bind(this));
+        else if (this.element.children[0]?.tagName === 'INPUT') {
+            this.element.children[0].removeEventListener("input", this.sendUpdate);
+            this.element.children[0].removeEventListener("change", this.sendUpdate);
+        }
+        else {
+            this.element.removeEventListener("blur", this.sendUpdate);
+        }
     }
 
 
@@ -36,6 +47,12 @@ export default class extends Controller {
         let valeur = this.element.innerText;
         if (this.element.tagName == 'SELECT') {
             valeur = this.element.options[this.element.selectedIndex].getAttribute('name');
+        }
+        else if (datePicker) {
+            if (this.element.children[0].value) {
+                valeur = valeur = this.element.children[0].value;
+
+            }
         }
         else {
             if (this.regexValue) {
@@ -52,7 +69,7 @@ export default class extends Controller {
             body: JSON.stringify({ entity: this.entityValue, field: this.fieldValue, value: valeur, id: this.idValue })
         });
 
-        let result;
+        let result = null;
         try {
             result = await response.json();
         } catch (e) {

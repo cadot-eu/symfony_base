@@ -49,6 +49,11 @@ class DashboardController extends AbstractController
             $enumClass = $metadata->getFieldMapping($field)['enumType'];
             $value = constant($enumClass . '::' . $data['value']);
         }
+        //si on demande un datetime on convertis le string en datetime
+        if (($metadata->getTypeOfField($field) == 'datetime' || $metadata->getTypeOfField($field) == 'date')) {
+            $value == '' ? $value = null : $value = new \DateTime($value);
+        }
+
         $entity->$setter($value);
         $em->persist($entity);
         $em->flush();
