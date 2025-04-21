@@ -109,12 +109,12 @@
 						{% set typeAssociation = constant('class',association)|split('\\')|last %}
 						<td>
 							{% for item in attribute(object, association.fieldName) %}
-								<a href="{{ path('dashboard_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}">
+								<a href="{{ path('dashboard_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}" data-turbo="false">
 									{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
 								</a>
 							{% endfor %}
 							{% if typeAssociation != "ManyToOneAssociationMapping"  %}
-								<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}">
+								<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}" data-turbo="false">
 									<button type="submit" class="btn btn-xs no-button">
 										<i class="bi bi-plus"></i>
 									</button>
@@ -123,15 +123,30 @@
 								{% set item = attribute(object, association.fieldName) %}
 								{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
 							{% endif %}
+
 						</td>
 					{% endfor %}
 					<td>
+						{% if parent %}
+							<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': entity, 'entityParentId': object.id, 'entityParent': parent }) }}" data-turbo="false">
+								<button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un enfant">
+									<i class="bi bi-plus"></i>
+								</button>
+							</form>
+						{% endif %}
 						<button class="btn btn-danger btn-sm" data-controller="form" data-form-confirmation-value="true" data-form-parent-value="#ligne_{{ object.id }}" data-form-url-value="{{ path('dashboard_delete_entity', {'entity': entity, 'id': object.id })}}" data-form-method-value="DELETE">Supprimer</button>
+						{% if object.Actions() is defined %}
+							{% for action,url in objetsActions[object.id] %}
+								<a href="{{ url }}" class="btn btn-primary btn-sm" target="_blank">
+									{{ action|raw }}
+								</a>
+							{% endfor %}
+						{% endif %}
 					</td>
 
 
 				</tr>
 			{% endfor %}
 		</tbody>
-	</tbody>
-</table>{% endif %}
+	</table>
+{% endif %}

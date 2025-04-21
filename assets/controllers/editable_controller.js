@@ -17,8 +17,8 @@ export default class extends Controller {
         if (this.element.tagName == 'SELECT') {
             this.element.addEventListener("change", this.sendUpdate.bind(this));
         }
-        else if (this.element.children[0].tagName == 'INPUT') { //pour les datepicker
-            this.element.children[0].addEventListener("input", this.sendUpdate.bind(this));
+        else if (this.element.querySelector('input')) { //pour les datepicker
+            this.element.querySelector('input').addEventListener("input", this.sendUpdate.bind(this));
             datePicker = true;
 
         }
@@ -33,9 +33,9 @@ export default class extends Controller {
         if (this.element.tagName === 'SELECT') {
             this.element.removeEventListener("change", this.sendUpdate);
         }
-        else if (this.element.children[0]?.tagName === 'INPUT') {
-            this.element.children[0].removeEventListener("input", this.sendUpdate);
-            this.element.children[0].removeEventListener("change", this.sendUpdate);
+        else if (this.element.querySelector('input')) {
+            this.element.querySelector('input').removeEventListener("input", this.sendUpdate);
+            this.element.querySelector('input').removeEventListener("change", this.sendUpdate);
         }
         else {
             this.element.removeEventListener("blur", this.sendUpdate);
@@ -49,8 +49,8 @@ export default class extends Controller {
             valeur = this.element.options[this.element.selectedIndex].getAttribute('name');
         }
         else if (datePicker) {
-            if (this.element.children[0].value) {
-                valeur = valeur = this.element.children[0].value;
+            if (this.element.querySelector('input').value) {
+                valeur = valeur = this.element.querySelector('input').value;
 
             }
         }

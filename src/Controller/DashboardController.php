@@ -76,6 +76,7 @@ class DashboardController extends AbstractController
         $objectsType = [];
         $objectsValues = [];
         $objetsAttributs = [];
+        $objetsActions = [];
         $metadata = $em->getClassMetadata($entityClass);
         foreach ($metadata->getFieldNames() as $field) {
             $fieldMapping = $metadata->getFieldMapping($field);
@@ -104,6 +105,16 @@ class DashboardController extends AbstractController
                 $objectsType[$field] = $metadata->getTypeOfField($field);
             }
         }
+        foreach ($objects as $object) {
+            if (method_exists($object, 'Actions')) {
+                foreach ($object->Actions() as $action => $url) {
+                    //on remplace les [] par les propriétés de l'objet
+                    $objetsActions[$object->getId()][$action] = preg_replace_callback('/\[(.*?)\]/', function ($matches) use ($object) {
+                        return $object->{'get' . ucfirst($matches[1])}();
+                    }, $url);
+                }
+            }
+        }
         //on regarde si on a des relations
         $metadata = $em->getClassMetadata($entityClass);
         $associations = $metadata->getAssociationMappings();
@@ -118,10 +129,12 @@ class DashboardController extends AbstractController
             'objectsType' => $objectsType,
             'objectsValues' => $objectsValues,
             'objetsAttributs' => $objetsAttributs,
+            'objetsActions' => $objetsActions,
             'entity' => $entity,
             'entities' => $this->getEntitiesName(),
             'associations' => $associations,
-            'parent' => $parent
+            'parent' => $parent,
+
         ]);
     }
     #[Route('/delete/{entity}/{id}', name: 'delete_entity', methods: ['DELETE'])]
