@@ -109,7 +109,7 @@
 						{% set typeAssociation = constant('class',association)|split('\\')|last %}
 						<td>
 							{% for item in attribute(object, association.fieldName) %}
-								<a href="{{ path('dashboard_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}" data-turbo="false">
+								<a href="{{ path('dashboard_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}" data-turbo="false" class="text-decoration-none">
 									{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
 								</a>
 							{% endfor %}
@@ -129,7 +129,7 @@
 					<td>
 						{% if parent %}
 							<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': entity, 'entityParentId': object.id, 'entityParent': parent }) }}" data-turbo="false">
-								<button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un enfant">
+								<button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un objet {{ entity|split('\\')|last }} descendant du  même {{ parent|split('\\')|last }} ">
 									<i class="bi bi-plus"></i>
 								</button>
 							</form>
