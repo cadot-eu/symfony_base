@@ -61,8 +61,8 @@ class DashboardController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/entities/{entity}', name: 'list_entities', methods: ['GET'])]
-    public function listEntities(string $entity, EntityManagerInterface $em): Response
+    #[Route('/entities/{entity}', name: 'list_entities', methods: ['GET', 'POST'])]
+    public function listEntities(string $entity, Request $request, EntityManagerInterface $em): Response
     {
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
 
@@ -71,7 +71,23 @@ class DashboardController extends AbstractController
         }
 
         $repository = $em->getRepository($entityClass);
-        $objects = $repository->findAll();
+        if ($request->isMethod('POST')) {
+            $criteria = $request->request->get('criteria');
+            $criteriaArray = json_decode($criteria, true);
+
+            if ($entity === 'LigneDevis' && isset($criteriaArray['devis'])) {
+                $devisRepository = $em->getRepository('App\Entity\Devis');
+                $devis = $devisRepository->find($criteriaArray['devis']);
+                if (!$devis) {
+                    $this->addFlash('error', "Devis non trouvé.");
+                    return $this->redirectToRoute('dashboard_index');
+                }
+                $criteriaArray['devis'] = $devis;
+            }
+
+            $objects = $repository->findBy($criteriaArray);
+        } else
+            $objects = $repository->findAll();
         //on récupère le type des attributs
         $objectsType = [];
         $objectsValues = [];

@@ -1,3 +1,15 @@
+{% macro formatFieldName(field) %}
+	{% set mot = '' %}
+	{% for letter in field|split('') %}
+		{% if letter == letter|upper and letter != '*' %}
+			{% set mot = mot ~ ' ' ~ letter|lower %}
+		{% else %}
+			{% set mot = mot ~ letter %}
+		{% endif %}
+	{% endfor %}
+	{{ mot }}
+{% endmacro %}
+
 <div class="d-flex justify-content-end mb-2">
 	{% if parent  is null %}
 		<form method="post" action="{{ path('dashboard_create_entity', {'entity': entity}) }}">
@@ -14,18 +26,12 @@
 			<tr>
 				<th>ID</th>
 				{% for field in objects[0].fieldsCrud|default %}
-					{% set mot = '' %}
-					{% for letter in field|split('') %}
-						{% if letter == letter|upper  and letter !='*' %}
-							{% set mot = mot ~ ' ' ~ letter|lower %}
-						{% else %}
-							{% set mot = mot ~ letter %}
-						{% endif %}
-					{% endfor %}
-					<th class=" text-center">{{ mot }}</th>
+
+					<th class=" text-center">{{ _self.formatFieldName(field) }}</th>
 				{% endfor %}
 				{% for association in associations %}
-					<th>{{ association.fieldName }}</th>
+					<th>{{ _self.formatFieldName(association.fieldName)|split(' ')|last }}
+					</th>
 				{% endfor %}
 				<th>Actions</th>
 			</tr>
@@ -108,15 +114,16 @@
 					{% for entityParent,association in associations %}
 						{% set typeAssociation = constant('class',association)|split('\\')|last %}
 						<td>
-							{% for item in attribute(object, association.fieldName) %}
-								<a href="{{ path('dashboard_list_entities', {'entity': association.targetEntity|split('\\')|last, 'id': item.id}) }}" data-turbo="false" class="text-decoration-none">
-									{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
-								</a>
-							{% endfor %}
 							{% if typeAssociation != "ManyToOneAssociationMapping"  %}
+								<form method="post" class="d-inline" action="{{ path('dashboard_list_entities', {'entity': association.targetEntity|split('\\')|last} ) }}" data-turbo="false">
+									<input type="hidden" name="criteria" value='{"{{entity|split(' \\')|last|lower}}":{{object.id}}}'>
+									<button type="submit" class="btn btn-xs no-button">
+										<i class="bi bi-arrow-right-circle" title="voir les {{ association.targetEntity|split('\\')|last }} de ce {{ entity|split('\\')|last }}"></i>
+									</button>
+								</form>
 								<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}" data-turbo="false">
 									<button type="submit" class="btn btn-xs no-button">
-										<i class="bi bi-plus"></i>
+										<i class="bi bi-plus" title="Ajoute un {{ association.targetEntity|split('\\')|last }} à ce {{ entity|split('\\')|last }}"></i>
 									</button>
 								</form>
 							{% else %}
