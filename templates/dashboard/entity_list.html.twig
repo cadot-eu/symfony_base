@@ -128,7 +128,10 @@
 								</form>
 							{% else %}
 								{% set item = attribute(object, association.fieldName) %}
-								{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
+								{% if item %}
+									{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
+								{% endif %}
+
 							{% endif %}
 
 						</td>

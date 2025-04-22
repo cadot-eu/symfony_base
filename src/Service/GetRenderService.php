@@ -2,27 +2,22 @@
 
 namespace App\Service;
 
-use Symfony\Component\HttpFoundation\Response;
-use Doctrine\ORM\EntityManagerInterface;
 use Twig\Environment;
 
 class GetRenderService
 {
-    private $em;
     private $twig;
 
-    public function __construct(EntityManagerInterface $em, Environment $twig)
+    public function __construct(Environment $twig)
     {
-        $this->em = $em;
         $this->twig = $twig;
     }
 
-    public function render(string $entity, string $id, string $field): Response
+    public function render(?string $json, bool $inline = false): String
     {
-        $entityClass = 'App\\Entity\\' . ucfirst($entity);
-        $entity = $this->em->getRepository($entityClass)->find($id);
-        $getter = 'get' . ucfirst($field);
-        $json = $entity->$getter();
+        if (empty($json)) {
+            return '';
+        }
         $content = json_decode($json, true);
         $blocks = $content['blocks'] ?? [];
         foreach ($blocks as $number => $block) {
@@ -39,8 +34,30 @@ class GetRenderService
                 $blocks[$number]['type'] = 'unknown-' . $block['type'];
             }
         }
-        return new Response($this->twig->render('editorjs_render.html.twig', [
+
+        $html = $this->twig->render('editorjs_render.html.twig', [
             'blocks' => $blocks
-        ]));
+        ]);
+        if ($inline) {
+            $dom = new \DOMDocument();
+            $dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+
+            // Find the first paragraph element and replace it with a span
+            if ($firstP = $dom->getElementsByTagName('p')->item(0)) {
+                $span = $dom->createElement('span', $firstP->nodeValue);
+                //on ajoute les class
+                $span->setAttribute('class', $firstP->getAttribute('class'));
+                $firstP->parentNode->replaceChild($span, $firstP);
+            }
+
+            // Extract HTML content from body
+            if ($body = $dom->getElementsByTagName('body')->item(0)) {
+                $html = '';
+                foreach ($body->childNodes as $child) {
+                    $html .= $dom->saveHTML($child);
+                }
+            }
+        }
+        return $html;
     }
 }

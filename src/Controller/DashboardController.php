@@ -241,7 +241,11 @@ class DashboardController extends AbstractController
     #[Route('/get/{entity}/{id}/{field}', name: 'get_entity', methods: ['GET'])]
     public function getDatasOfObjet(string $entity, string $id, string $field, GetRenderService $getRender): Response
     {
-        return $getRender->render($entity, $id, $field);
+        $entityClass = 'App\\Entity\\' . ucfirst($entity);
+        $entity = $this->em->getRepository($entityClass)->find($id);
+        $getter = 'get' . ucfirst($field);
+        $json = $entity->$getter();
+        return  new Response($getRender->render($json));
     }
     #[Route('/getEnvEditorjs', name: 'get_env', methods: ['GET'])]
     public function getEnvEditorjs(): JsonResponse
