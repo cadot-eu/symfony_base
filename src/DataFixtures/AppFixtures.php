@@ -25,14 +25,12 @@ class AppFixtures extends Fixture
         if (!$this->em->getRepository(User::class)->findOneBy(['email' => 'superadmin@aa.aa'])) {
             $user = new User();
             $user->setRoles(['ROLE_SUPERADMIN']);
-            $user->setEmail('theokdo@gmail.com');
-            $user->setNom('cadot');
-            $user->setPrenom('theo');
-            $user->setSiret('883 823 932 00024');
-            $user->setTelephone('06 52 45 36 58');
+            $user->setEmail('superadmin@aa.aa');
+            $user->setNom('supernom');
+            $user->setPrenom('superprénom');
             $hashedPassword = $this->passwordHasher->hashPassword(
                 $user,
-                'rouen'
+                '*'
             );
             $user->setPassword($hashedPassword);
             $manager->persist($user);
