@@ -106,7 +106,7 @@ return [
     'tippy.js' => [
         'version' => '6.3.7',
     ],
-    'tippy.js/themes/material.css' => [
+    'tippy.js/themes/light-border.css' => [
         'version' => '6.3.7',
         'type' => 'css',
     ],

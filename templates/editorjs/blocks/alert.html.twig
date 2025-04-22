@@ -1,0 +1,23 @@
+<div class="alert alert-{{block.data.type}}  editorjs-block-{{block.data.type}}" role="alert">
+	<div class="text-{{ block.data.align }}">
+		{% if block.data.type == "primary" %}
+			<i class="bi bi-info-circle-fill me-2 text-primary "></i>
+		{% elseif block.data.type == "secondary" %}
+			<i class="bi bi-info-circle-fill me-2 text-secondary"></i>
+		{% elseif block.data.type == "info" %}
+			<i class="bi bi-question-circle-fill me-2 text-info"></i>
+		{% elseif block.data.type == "success" %}
+			<i class="bi bi-check-circle-fill me-2 text-success"></i>
+		{% elseif block.data.type == "warning" %}
+			<i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>
+		{% elseif block.data.type == "danger" %}
+			<i class="bi bi-exclamation-octagon-fill me-2 text-danger"></i>
+		{% elseif block.data.type == "light" %}
+			<i class="bi bi-info-circle-fill me-2 text-light"></i>
+		{% elseif block.data.type == "dark" %}
+			<i class="bi bi-info-circle-fill me-2 text-dark"></i>
+		{% endif %}
+
+		{{ block.data.message|replace({'<div>': '', '</div>': ''})|raw }}
+	</div>
+</div>

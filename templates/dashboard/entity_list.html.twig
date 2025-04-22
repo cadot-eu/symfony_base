@@ -130,6 +130,13 @@
 								{% set item = attribute(object, association.fieldName) %}
 								{% if item %}
 									{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
+									{% if parent %}
+										<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': entity, 'entityParentId': item.id, 'entityParent': parent }) }}" data-turbo="false">
+											<button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un objet {{ entity|split('\\')|last }} descendant du  même {{ parent|split('\\')|last }} ">
+												<i class="bi bi-plus"></i>
+											</button>
+										</form>
+									{% endif %}
 								{% endif %}
 
 							{% endif %}
@@ -137,13 +144,6 @@
 						</td>
 					{% endfor %}
 					<td>
-						{% if parent %}
-							<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': entity, 'entityParentId': object.id, 'entityParent': parent }) }}" data-turbo="false">
-								<button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un objet {{ entity|split('\\')|last }} descendant du  même {{ parent|split('\\')|last }} ">
-									<i class="bi bi-plus"></i>
-								</button>
-							</form>
-						{% endif %}
 						<button class="btn btn-danger btn-sm" data-controller="form" data-form-confirmation-value="true" data-form-parent-value="#ligne_{{ object.id }}" data-form-url-value="{{ path('dashboard_delete_entity', {'entity': entity, 'id': object.id })}}" data-form-method-value="DELETE">Supprimer</button>
 						{% if object.Actions() is defined %}
 							{% for action,url in objetsActions[object.id] %}
