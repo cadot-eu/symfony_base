@@ -37,7 +37,7 @@ should_ignore() {
 }
 
 # Parcourir tous les fichiers du répertoire ../base (en excluant .git au niveau de find)
-find "../base" -type f -not -path "../base/.git/*" -not -path "../base/vendor/*" -not -path "../base/public/assets/*" -not -path "../base/assets/vendor/*" -not -name ".env"  -not -name "compose.yaml" -not -name "compose.override.yaml" -not -name "Caddyfile" -not -name ".phpunit.result*" -not -name ".env.dev" -not -name ".ignore"| while read -r base_file; do
+find "../base" -type f -not -path "../base/.git/*" -not -path "../base/vendor/*" -not -path "../base/public/assets/*" -not -path "../base/assets/vendor/*" -not -name ".env"  -not -name "compose.yaml" -not -name "compose.override.yaml" -not -name "Caddyfile" -not -name ".phpunit.result*" -not -name ".env.dev" -not -name ".ignore" -not -name ".composer.lock.swp" -not -name ".composer.json.swp" -not -name "composer.lock" -not -path "../base/assets/styles/app.css"| while read -r base_file; do
     # Extraire le chemin relatif
     rel_path="${base_file#../base/}"
     

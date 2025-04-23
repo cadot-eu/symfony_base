@@ -47,3 +47,8 @@ td[contenteditable="true"] {
         opacity: 0.5;
     }
 }
+
+.image-tool__caption {
+    visibility: visible ! important;
+    position: relative ! important;
+}
