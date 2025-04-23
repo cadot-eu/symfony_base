@@ -1,11 +1,11 @@
 {% set imgClass = [
     block.data.withBorder ? 'border',
     block.data.withBackground ? 'p-2 bg-light',
-    block.data.stretched ? 'img-fluid w-100'
+    block.data.stretched ? ' w-100'
 ]|filter(v => v is not empty) | join(' ') %}
 <figure class="text-center editorjs-block-image">
-	<img src="{{ block.data.file.url }}" alt="{{ block.data.caption }}" class="{{ imgClass }}">
+	<img src="{{ block.data.file.url }}" alt="{{ block.data.caption }}" class="img-fluid {{ imgClass }}">
 	{% if block.data.caption is not empty %}
-		<figcaption class="figure-caption text-muted">{{ block.data.caption }}</figcaption>
+		<figcaption class="figure-caption text-muted">{{ block.data.caption|raw }}</figcaption>
 	{% endif %}
 </figure>

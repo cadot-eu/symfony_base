@@ -14,8 +14,10 @@ import AttachesTool from '@editorjs/attaches';
 import Alert from 'editorjs-alert';
 import Marker from '@editorjs/marker';
 import Strikethrough from '@sotaproject/strikethrough';
+import { Video } from '@hannal/editorjs-video-plugin';
 import Tooltip from '../scripts/editorjs/tooltip.js';
 import initializeTooltips from '../scripts/tippy.js';
+import Undo from 'editorjs-undo';
 import { fetchEnv } from '../scripts/getEnvEditorjs.js';
 
 
@@ -93,6 +95,7 @@ export default class extends Controller {
             // Initialiser EditorJS
             this.editor = new EditorJS({
                 onReady: () => {
+                    new Undo({ editor: this.editor });
                     //on liste les class ce-block et on active un drg and drop
                     document.querySelectorAll('.ce-block').forEach((block) => {
                         //block.insertAdjacentHTML('afterbegin', '<i class="bi bi-arrows-move drag-handle"></i>');
@@ -142,10 +145,12 @@ export default class extends Controller {
             },
             image: {
                 class: Image,
+
                 config: {
                     endpoints: {
                         byFile: '/editorjs/upload/articles',
-                    }
+                    },
+                    captionPlaceholder: "Entrez le titre de l'image ou laissez vide",
                 }
             },
             code: {
@@ -174,6 +179,12 @@ export default class extends Controller {
             strikethrough: Strikethrough,
             linkTool: {
                 class: LinkTool,
+            },
+            video: {
+                class: Video,
+                config: {
+                    // Optional platform configurations
+                }
             },
             delimiter: Delimiter,
             table: Table,

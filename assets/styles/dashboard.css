@@ -24,3 +24,26 @@ body {
     border-color: #f5c6cb;
     text-align: center;
 }
+
+td[contenteditable="true"] {
+    border: 1px dashed transparent;
+    outline: 1px dashed #765959;
+    outline-offset: -5px;
+
+}
+
+.flash {
+    animation: flash 1s ease-in-out infinite;
+}
+
+@keyframes flash {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}

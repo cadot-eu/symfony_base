@@ -17,16 +17,15 @@ export default class extends Controller {
         if (this.element.tagName == 'SELECT') {
             this.element.addEventListener("change", this.sendUpdate.bind(this));
         }
-        else if (this.element.querySelector('input')) { //pour les datepicker
+        else if (this.element.querySelector('input') && (this.element.querySelector('input').type == 'date' || this.element.querySelector('input').type == 'datetime-local')) { //pour les datepicker
             this.element.querySelector('input').addEventListener("input", this.sendUpdate.bind(this));
-            datePicker = true;
+            this.datePicker = true;
 
         }
         else {
             //is on a un regex on l'ajoute avec son message
             this.element.addEventListener("blur", this.sendUpdate.bind(this));
         }
-
     }
 
     disconnect() {
@@ -48,7 +47,7 @@ export default class extends Controller {
         if (this.element.tagName == 'SELECT') {
             valeur = this.element.options[this.element.selectedIndex].getAttribute('name');
         }
-        else if (datePicker) {
+        else if (this.datePicker) {
             if (this.element.querySelector('input').value) {
                 valeur = valeur = this.element.querySelector('input').value;
 

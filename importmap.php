@@ -110,4 +110,10 @@ return [
         'version' => '6.3.7',
         'type' => 'css',
     ],
+    '@hannal/editorjs-video-plugin' => [
+        'version' => '0.0.2',
+    ],
+    'editorjs-undo' => [
+        'version' => '2.0.28',
+    ],
 ];
