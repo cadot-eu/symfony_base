@@ -38,3 +38,4 @@ security:
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/dashboard, roles: ROLE_SUPERADMIN }
         - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/superadmin, roles: ROLE_SUPERADMIN }

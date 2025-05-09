@@ -20,6 +20,7 @@ return [
         'path' => './assets/dashboard.js',
         'entrypoint' => true,
     ],
+
     '@symfony/stimulus-bundle' => [
         'path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js',
     ],
@@ -115,5 +116,12 @@ return [
     ],
     'editorjs-undo' => [
         'version' => '2.0.28',
+    ],
+    'glightbox' => [
+        'version' => '3.3.1',
+    ],
+    'glightbox/dist/css/glightbox.min.css' => [
+        'version' => '3.3.1',
+        'type' => 'css',
     ],
 ];
