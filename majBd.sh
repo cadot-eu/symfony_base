@@ -1,3 +1,5 @@
+dkillall
+docker volume rm ${NOM_REP}_database_data-${NOM_REP}
 dc up -d
 JOUR=$(date +"%A" )
 NOM_REP=$(basename "$PWD")
