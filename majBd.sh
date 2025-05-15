@@ -1,8 +1,9 @@
+JOUR=$(date +"%A" )
+NOM_REP=$(basename "$PWD")
+
 dkillall
 docker volume rm ${NOM_REP}_database_data-${NOM_REP}
 dc up -d
-JOUR=$(date +"%A" )
-NOM_REP=$(basename "$PWD")
 
 scp backup_user@cadot.eu:backups/backup_${NOM_REP}_${JOUR}.sql .
 scp backup_user@cadot.eu:backups/uploads_backup_${NOM_REP}_${JOUR}.tar.gz .
