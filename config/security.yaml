@@ -12,6 +12,9 @@ security:
                 property: email
 
     firewalls:
+        image_resolver: #pour liip_imagine afin de ne pas vérifier que l'utilisateur est connecté
+            pattern: ^/media/cache/resolve
+            security: false
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false

@@ -1,5 +1,5 @@
 import './bootstrap.js';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/dashboard.css';
 import './scripts/tippy.js';
-import './scripts/turbo-loading.js';
 

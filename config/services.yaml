@@ -20,3 +20,8 @@ services:
     App\Service\GetRenderService:
         arguments:
             $twig: "@twig"
+
+    app.filter.all_filter:
+        class: App\Imagine\Filter\Loader\AllImagineFilter
+        tags:
+            - { name: "liip_imagine.filter.loader", loader: "allfilter" }

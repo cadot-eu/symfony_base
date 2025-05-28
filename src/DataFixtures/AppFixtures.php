@@ -26,8 +26,8 @@ class AppFixtures extends Fixture
             $user = new User();
             $user->setRoles(['ROLE_SUPERADMIN']);
             $user->setEmail('superadmin@aa.aa');
-            $user->setNom('supernom');
-            $user->setPrenom('superprénom');
+            $user->setNom('superadmin');
+            $user->setPrenom('super_administrateur');
             $hashedPassword = $this->passwordHasher->hashPassword(
                 $user,
                 '*'

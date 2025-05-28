@@ -29,7 +29,10 @@
 					{{ entity is defined?	'Les données: ' ~entity :'Tableau de bord'}}</h2>
 
 				{% if entity is defined %}
-					{{include('/dashboard/entity_list.html.twig')}}
+					<turbo-frame id="entity_list">
+						{{include('/dashboard/entity_list.html.twig')}}
+					</turbo-frame>
+
 				{% endif %}
 			</main>
 			<div class="mt-5" id="preview"></div>

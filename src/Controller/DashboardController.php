@@ -270,4 +270,32 @@ class DashboardController extends AbstractController
             return (new ReflectionClass($className))->getShortName();
         }, $entityClasses);
     }
+    //upload file par le controller stimulus uploadFile
+    #[Route('/uploadFile', name: 'upload_file', methods: ['POST'])]
+    public function uploadFile(Request $request): JsonResponse
+    {
+        $data = json_decode($request->request->get('data'), true);
+        $entityName = $data['entity'];
+        $field = $data['field'];
+        $id = $data['id'];
+        $entityClass = 'App\\Entity\\' . ucfirst($entityName);
+        $entity = $this->em->getRepository($entityClass)->find($id);
+        if (!$entity) {
+            return new JsonResponse(['error' => 'Entity not found'], 404);
+        }
+        $setter = 'set' . ucfirst($field);
+        $file = $request->files->get('file');
+        $directory = 'uploads' . '/' . $entityName;
+        if (!file_exists($directory)) {
+            mkdir($directory, 0777, true);
+        }
+        $filename = $file->getClientOriginalName();
+        //on nettoie le nom avec des caractères autorisés et on ajoute la date
+        $filename = preg_replace('/[^a-zA-Z0-9_-]/', '-', iconv('UTF-8', 'ASCII//TRANSLIT', pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)))
+            . '_' . date('Ymd_His') . '_' . uniqid() . '.' . $file->guessExtension();
+        $file->move($directory, $filename);
+        $entity->$setter($filename);
+        $this->em->flush();
+        return new JsonResponse(['success' => true]);
+    }
 }
