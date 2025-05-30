@@ -12,6 +12,13 @@
 			<nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar mt-5" data-turbo="false">
 
 				<div class="position-sticky">
+					<a class="btn btn-outline-primary btn-sm mt-2" target="_blank" href="/">Site</a>
+					{% if app.request.get('_route') == 'admin_index' %}
+						<a class="btn btn-outline-primary btn-sm mt-2" target="admin" href="{{ path('admin_index') }}">Admin</a>
+					{% endif %}
+					{% if app.request.get('_route') == 'superadmin_index' %}
+						<a class="btn btn-outline-primary btn-sm mt-2" target="superadmin" href="{{ path('superadmin_index') }}">SuperAdmin</a>
+					{% endif %}
 					<a class="btn btn-outline-primary btn-sm mt-2" href="{{ path('dashboard_index') }}">Tableau de bord</a>
 					<ul class="nav flex-column">
 						{% for entite in entities|sort %}

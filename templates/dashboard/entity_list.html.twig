@@ -12,14 +12,27 @@
 <turbo-stream target="entity_list" action="replace" id="entity_list_stream">
 	<template>
 		<div class="d-flex justify-content-end mb-2">
-			{% if parent  is null %}
-				<form method="post" action="{{ path('dashboard_create_entity', {'entity': entity}) }}">
-					<button type="submit" class="btn btn-primary">Ajouter</button>
-				</form>
-			{% else %}
-				<a href="{{ path('dashboard_list_entities', {'entity': parent }) }}" class="btn btn-primary">Retour vers le Parent
-					{{parent}}</a>
-			{% endif %}
+			<div class="d-flex gap-2">
+				{% if objects[0] is defined and objects[0].addButtonsToCrud() is defined %}
+					{% for label,bouton in objects[0].addButtonsToCrud() %}
+						<a href="{{ bouton.url }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ label }}" {{bouton.target is defined ? 'target="' ~ bouton.target ~ '"' : ''}}>
+							{% if bouton.icon %}
+								<i class="{{ bouton.icon }}"></i>
+							{% else %}
+								{{ bouton.label }}
+							{% endif %}
+						</a>
+					{% endfor %}
+				{% endif %}
+				{% if parent  is null %}
+					<form class="d-inline ms-4" method="post" action="{{ path('dashboard_create_entity', {'entity': entity}) }}">
+						<button type="submit" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="Ajouter un {{ entity|split('\\')|last }}">Ajouter</button>
+					</form>
+				{% else %}
+					<a href="{{ path('dashboard_list_entities', {'entity': parent }) }}" class="btn btn-primary">Retour vers le Parent
+						{{'"' ~ parent~'"'}}</a>
+				{% endif %}
+			</div>
 		</div>
 		{% if objects is not empty %}
 			<table class="table table-striped">
@@ -39,7 +52,20 @@
 				<tbody>
 					{% for object in objects|sort %}
 						<tr id="ligne_{{ object.id }}">
-							<td>{{ object.id }}</td>
+
+							<td>
+								{% if objects[0] is defined and objects[0].InfoIdCrud is defined %}
+									<p class="position-relative">
+										{{ object.id }}
+										<span class="position-absolute top-0 start-100 translate-middle text-primary" style="font-size: 0.5em;" data-bs-toggle="tooltip" data-bs-title="{{ objects[0].InfoIdCrud|ToList }}">
+											<i class="bi bi-info-circle"></i>
+										</span>
+									</p>
+
+								{% else %}
+									{{ object.id }}
+								{% endif %}
+							</td>
 							{% for field in objects[0].fieldsCrud|default %}
 								{# initialisation #}
 								{% if field|slice(-1) == '*' %}
@@ -101,7 +127,7 @@
 											{% if attribute(object, champ) %}
 												{% if attribute(object, champ) and attribute(object, champ)|split('.')|last in ['jpg', 'jpeg', 'png', 'gif', 'svg'] %}
 													{% set imagename = attribute(object, champ)|split('_')|first %}
-													<img data-controller='bigpicture' data-bigpicture-options-value='{"imgSrc": "{{ asset('uploads/' ~ entity ~ '/' ~ attribute(object, champ))}}"}' src="{{ asset('uploads/' ~ entity ~ '/' ~ attribute(object, champ))|imagine_filter('minicarree') }} " alt="{{imagename}}"/>
+													<img data-controller='bigpicture' data-bigpicture-options-value='{"imgSrc": "{{ asset(' uploads/' ~ entity ~ ' /' ~ attribute(object, champ))}}"}' src="{{ asset('uploads/' ~ entity ~ '/' ~ attribute(object, champ))|imagine_filter('minicarree') }} " alt="{{imagename}}"/>
 												{% endif %}
 											{% endif %}
 											<button class="btn btn-xs no-button" data-controller="uploadFile" data-uploadfile-folder-name-value="{{entity}}" data-uploadfile-entity-value="{{entity}}" data-uploadfile-field-value="{{champ}}" data-uploadfile-id-value="{{object.id}}" data-action="click->uploadFile#chooseFile">
@@ -127,7 +153,7 @@
 								{% set typeAssociation = constant('class',association)|split('\\')|last %}
 								<td>
 									{% if typeAssociation != "ManyToOneAssociationMapping"  %}
-										<form method="post" class="d-inline" action="{{ path('dashboard_list_entities', {'entity': association.targetEntity|split('\\')|last} ) }}" data-turbo="false">
+										<form method="post" class="d-inline" action="{{ path('dashboard_list_entities', {'enfantid': object.id, 'entity': association.targetEntity|split('\\')|last} ) }}" data-turbo="false">
 											<input type="hidden" name="criteria" value='{"{{entity|split(' \\')|last|lower}}":{{object.id}}}'>
 											<button type="submit" class="btn btn-xs no-button">
 												<i class="bi bi-arrow-right-circle" title="voir les {{ association.targetEntity|split('\\')|last }} de ce {{ entity|split('\\')|last }}"></i>

@@ -1,6 +1,5 @@
 import tippy from 'tippy.js';
 import 'tippy.js/themes/light-border.css';
-
 export default function initializeTooltips(elements = document.querySelectorAll('[data-bs-toggle="tooltip"]')) {
     elements.forEach(el => {
         tippy(el, {
@@ -13,4 +12,6 @@ export default function initializeTooltips(elements = document.querySelectorAll(
     });
 }
 
-initializeTooltips();
+window.addEventListener('load', () => {
+    initializeTooltips();
+});

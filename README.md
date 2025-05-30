@@ -24,8 +24,61 @@ Stimulus & Controller pour modification en directe
 - - `*` => la modification est possible
 - - `#` => on limite l'affichage à 10 caractère et on créé un modal avec le texte complet
 
+example:
+
+```php
+public function fieldsCrud(): array
+{
+    return ['tuyaId', 'nom*', 'x*', 'y*', 'sync*', 'switchCode*'];
+}
+```
+
+- créer une fontion __toSring pour renvoyer le nom à afficher dans les enfants ... au lieu de l'id
+
+- crééer une méthode `AddButtonsToCrud` qui retourne un tableau de champs de la forme:
+- - texte de l'entité
+- - url: vous pouvet mettre {{ path('') })}}
+- - target: pas obligatoire
+- - icon: pas obligatoire
+
+example:
+
+```php
+public function AddButtonsToCrud(): array
+    {
+        return [
+            'slug' => [
+                'url' => 'http://google.com',
+                'target' => '_blank',
+                'icon' => 'fas fa-globe',
+
+            ]
+        ];
+    }
+```
+
+example:
+
+- créer une méthode `InfoIdCrud` pour afficher une tooltip d'information sur l'id
+
+```php
+ public function InfoIdCrud(): array
+    {
+        return [
+            'tuyaId' => $this->getTuyaId(),
+            'nom' => $this->getNom(),
+            'switchCode' => $this->getSwitchCode(),
+            'UUID' => $this->getUuid(),
+            'UID' => $this->getUid(),
+        ];
+    }
+```
+
 ## utilisation des scripts de debs
 
 - `dsh`: entrer dans le docker
 - `dlogs`: voir les logs
+
 # labo
+
+# tuyadomotic
