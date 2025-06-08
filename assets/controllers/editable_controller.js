@@ -2,19 +2,20 @@ import { Controller } from '@hotwired/stimulus';
 import flasher from '@flasher/flasher';
 
 
-let datePicker = false;
 export default class extends Controller {
     static values = {
         url: String,
         entity: String,
         regex: String,
+        associationid: { type: String, default: '' },
+        regexValue: String,
         regexMessage: String,
     };
-
-
-
     connect() {
-        if (this.element.tagName == 'SELECT') {
+        if (this.element.tagName == 'INPUT' && this.element.type == 'checkbox') {
+            this.element.addEventListener("change", this.sendUpdate.bind(this));
+        }
+        else if (this.element.tagName == 'SELECT') {
             this.element.addEventListener("change", this.sendUpdate.bind(this));
         }
         else if (this.element.querySelector('input') && (this.element.querySelector('input').type == 'date' || this.element.querySelector('input').type == 'datetime-local')) { //pour les datepicker
@@ -43,21 +44,26 @@ export default class extends Controller {
 
 
     async sendUpdate() {
-        let valeur = this.element.innerText;
-        if (this.element.tagName == 'SELECT') {
+        let valeur = this.element.textContent.trim();
+        if (this.element.tagName == 'INPUT' && this.element.type == 'checkbox') {
+            if (this.associationidValue == '')
+                valeur = this.element.checked;
+            else
+                valeur = { 'associationid': this.associationidValue, 'value': this.element.checked };
+        }
+        else if (this.element.tagName == 'SELECT') {
             valeur = this.element.options[this.element.selectedIndex].getAttribute('name');
         }
         else if (this.datePicker) {
             if (this.element.querySelector('input').value) {
                 valeur = valeur = this.element.querySelector('input').value;
-
             }
         }
         else {
             if (this.regexValue) {
                 let regex = new RegExp(this.regexValue);
                 if (!regex.test(valeur)) {
-                    flasher.error(this.regexMessageValue);
+                    flasher.error(this.regexMessageValue + ' : ' + valeur);
                     return;
                 }
             }

@@ -16,7 +16,7 @@ import Marker from '@editorjs/marker';
 import Strikethrough from '@sotaproject/strikethrough';
 import { Video } from '@hannal/editorjs-video-plugin';
 import Tooltip from '../scripts/editorjs/tooltip.js';
-import initializeTooltips from '../scripts/tippy.js';
+import initializeTooltips from '../scripts/tooltip.js';
 import Undo from 'editorjs-undo';
 import { fetchEnv } from '../scripts/getEnvEditorjs.js';
 

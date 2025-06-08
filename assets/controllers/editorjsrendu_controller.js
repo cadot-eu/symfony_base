@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 import highlight from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import BigPicture from 'bigpicture';
-import initializeTooltips from '../scripts/tippy.js';
+import initializeTooltips from '../scripts/tooltip.js';
 
 
 export default class extends Controller {

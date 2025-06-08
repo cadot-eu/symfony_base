@@ -19,7 +19,7 @@
 			{% endblock %}
 		{% endblock %}
 	</head>
-	<body>
-		{% block body %}{% endblock %}
-	</body>
-</html>
+	<body data-controller="theme" data-theme-day-start-value="8" data-theme-night-start-value="20" class="{{ theme|default('theme-day') }}"> {% block body %}{% endblock %}
+		</body>
+
+	</html>

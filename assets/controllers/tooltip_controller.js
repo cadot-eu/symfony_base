@@ -8,6 +8,11 @@ export default class extends Controller {
 
   connect() {
     if (this.htmlValue) {
+      try {
+        this.htmlValue = JSON.parse(this.htmlValue);
+      } catch (e) {
+        console.error(e);
+      }
       // Créer l'élément modal dynamiquement
       this.modalElement = document.createElement('div');
       this.modalElement.classList.add('modal', 'fade');

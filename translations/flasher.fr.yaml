@@ -2,8 +2,13 @@ success: Succès
 error: Erreur
 warning: Avertissement
 info: Information
-'The resource was created': 'La ressource :resource a été ajoutée'
-'The resource was updated': 'La ressource :resource a été mise à jour'
-'The resource was saved': 'La ressource :resource a été enregistrée'
-'The resource was deleted': 'La ressource :resource a été supprimée'
-resource: ''
+"The resource was created": "La ressource :resource a été ajoutée"
+"The resource was updated": "La ressource :resource a été mise à jour"
+"The resource was saved": "La ressource :resource a été enregistrée"
+"The resource was deleted": "La ressource :resource a été supprimée"
+resource: ""
+options:
+  # Time in milliseconds before the notification disappears
+  timeout: 2000
+  # Where the notification appears on the screen
+  position: "bottom-left"

@@ -1,4 +1,4 @@
 import './bootstrap.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/app.css';
-import './scripts/tippy.js';
+import './scripts/tooltip.js';

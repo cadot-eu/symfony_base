@@ -29,7 +29,7 @@ example:
 ```php
 public function fieldsCrud(): array
 {
-    return ['tuyaId', 'nom*', 'x*', 'y*', 'sync*', 'switchCode*'];
+    return ['tuyaId', 'nom*''];
 }
 ```
 

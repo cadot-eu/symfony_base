@@ -31,38 +31,62 @@ class DashboardController extends AbstractController
         );
     }
 
-    #[Route('/update/{entity}/{field}/{id}', name: 'update_field', methods: ['POST'])]
+    #[Route('/update/{entity}/{field}/{id}', name: 'update_field', methods: ['POST', 'GET'])]
     public function updateField(string $entity, string $field, int $id, Request $request, EntityManagerInterface $em): Response
     {
         $data = json_decode($request->getContent(), true);
-
         if (!$data || !isset($data['value'])) {
-            return new JsonResponse(['error' => 'Invalid data'], 400);
+            return new JsonResponse(['error' => 'Invalid data:' . $data], 400);
         }
+
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
-        $entity = $em->getRepository($entityClass)->find($id);
+        $entityR = $em->getRepository($entityClass)->find($id);
         $setter = 'set' . ucfirst($field);
         $metadata = $em->getClassMetadata($entityClass);
-        $fieldMapping = $metadata->getFieldMapping($field);
-        $value = $data['value'];
-        if (isset($fieldMapping['enumType'])) {
-            $enumClass = $metadata->getFieldMapping($field)['enumType'];
-            $value = constant($enumClass . '::' . $data['value']);
-        }
-        //si on demande un datetime on convertis le string en datetime
-        if (($metadata->getTypeOfField($field) == 'datetime' || $metadata->getTypeOfField($field) == 'date')) {
-            $value == '' ? $value = null : $value = new \DateTime($value);
-        }
 
-        $entity->$setter($value);
-        $em->persist($entity);
+
+        //on vérifie si on est dans une association avec ce field
+        if ($metadata->hasAssociation($field)) {
+            $entityClass = 'App\\Entity\\' . ucfirst($entity);
+            $entityR = $em->getRepository($entityClass)->find($id);
+            $methodGetter = 'get' . ucfirst($field);
+            $assocEntiies = $entityR->$methodGetter();
+            //si on a une valeur false on supprime l'entité de l'assocaition
+            $classEnfant = $metadata->getAssociationMapping($field)->targetEntity;
+            if ($data['value']['value'] == true) {
+                //on ajoute l'objet
+                $addMethod = 'add' . substr(ucfirst($field), 0, -1);
+                $entityR->$addMethod($em->getRepository($classEnfant)->find($data['value']['associationid']));
+            } else {
+                //on retire l'objet
+                $removeMethod = 'remove' . substr(ucfirst($field), 0, -1);
+                $entityR->$removeMethod($em->getRepository($classEnfant)->find($data['value']['associationid']));
+            }
+        } else {
+            $fieldMapping = $metadata->getFieldMapping($field);
+            $value = $data['value'];
+            if (isset($fieldMapping['enumType'])) {
+                $enumClass = $metadata->getFieldMapping($field)['enumType'];
+                $value = constant($enumClass . '::' . $data['value']);
+            }
+            //si on demande un datetime on convertis le string en datetime
+            if (($metadata->getTypeOfField($field) == 'datetime' || $metadata->getTypeOfField($field) == 'date')) {
+                $value == '' ? $value = null : $value = new \DateTime($value);
+            }
+
+            $entityR->$setter($value);
+        }
+        $em->persist($entityR);
+
         $em->flush();
 
         return new JsonResponse(['success' => true]);
     }
 
     #[Route('/entities/{entity}/{enfantid}', name: 'list_entities', methods: ['GET', 'POST'])]
-    public function listEntities(string $entity, Request $request, EntityManagerInterface $em, $enfantid = null): Response
+    #[Route('/entities/{entity}/{parent}/{parentid}', name: 'list_entities_parent', methods: ['GET', 'POST'])]
+
+    public function listEntities(string $entity, Request $request, EntityManagerInterface $em, $enfantid = null, $parent = null, $parentid = null): Response
     {
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
 
@@ -71,12 +95,30 @@ class DashboardController extends AbstractController
         }
 
         $repository = $em->getRepository($entityClass);
-        if ($request->isMethod('POST')) {
+        if ($request->isMethod('POST') && $request->request->has('criteria')) {
             $criteria = $request->request->get('criteria');
             $criteriaArray = json_decode($criteria, true);
             $objects = $repository->findBy($criteriaArray);
         } else
             $objects = $repository->findAll();
+        //si on a parentid on ne garde que les objtes qui ont dans leurs parents l'id parentid
+        $ok = [];
+        if ($parentid) {
+            foreach ($objects as $key => $object) {
+                $method = 'get' . ucfirst($parent);
+                $parents = $object->$method();
+                if (count($parents) == 0) {
+                    unset($objects[$key]);
+                    continue;
+                }
+                foreach ($parents as $pere) {
+                    if ($pere->getId() == $parentid) {
+                        $ok[] = $object;
+                    }
+                }
+            }
+            $objects = $ok;
+        }
         //on récupère le type des attributs
         $objectsType = [];
         $objectsValues = [];
@@ -159,8 +201,8 @@ class DashboardController extends AbstractController
     }
     //dashboard_create_entity
     #[Route('/create/{entity}', name: 'create_entity', methods: ['POST'])]
-    #[Route('/create/{entity}/{entityParentId}', name: 'create_child_entity', methods: ['POST'])]
-    public function createEntity(string $entity, string $entityParentId = null, EntityManagerInterface $em, SerializerInterface $serializer): Response
+    #[Route('/create/{entity}/{entityParentId}/{entityParent}', name: 'create_child_entity', methods: ['POST'])]
+    public function createEntity(string $entity, string $entityParentId = null, string $entityParent = null, EntityManagerInterface $em, SerializerInterface $serializer): Response
     {
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
         if (!class_exists($entityClass)) {
@@ -171,14 +213,13 @@ class DashboardController extends AbstractController
         $reflection = new ReflectionClass($entityN);
         $a_eviter = ['Doctrine\ORM\Mapping\GeneratedValue'];
         foreach ($reflection->getProperties() as $property) {
-
             //on modifie pas les champs qui ont GeneratedValue
             foreach ($property->getAttributes() as $attribute) {
                 if ($attribute->getName() === 'Doctrine\ORM\Mapping\GeneratedValue') {
                     continue 2;
                 }
                 //pour le cas des relations
-                if ($entityParentId && ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany' || $attribute->getName() === 'Doctrine\ORM\Mapping\ManyToOne' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToOne')) {
+                if ($entityParentId && ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToOne' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToOne')) {
                     //on récupère l'entité parent par son id
                     $entityParent = $em->getRepository($property->getType()->getName())->find($entityParentId);
                     if ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany') {
@@ -187,6 +228,13 @@ class DashboardController extends AbstractController
                         $addMethod = 'set' . ucfirst($property->getName());
                     }
                     $entityN->$addMethod($entityParent);
+                    continue 2;
+                }
+                if ($entityParentId && ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany')) {
+                    //on récupère l'entité parent par son id
+                    $entityParentEntity = $em->getRepository('App\Entity\\' . $entityParent)->find($entityParentId);
+                    $addMethod = 'add' . $entityParent;
+                    $entityN->$addMethod($entityParentEntity);
                     continue 2;
                 }
             }
@@ -225,7 +273,7 @@ class DashboardController extends AbstractController
         }
         $em->persist($entityN);
         $em->flush();
-        return $this->redirectToRoute('dashboard_list_entities', ['entity' => $entity]);
+        return $this->redirectToRoute('dashboard_list_entities_parent', ['entity' => $entity, 'parentid' => $entityParentId, 'parent' => $entityParent]);
     }
     #[Route('/get/{entity}/{id}/{field}', name: 'get_entity', methods: ['GET'])]
     public function getDatasOfObjet(string $entity, string $id, string $field, GetRenderService $getRender): Response

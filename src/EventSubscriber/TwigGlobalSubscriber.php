@@ -15,11 +15,7 @@ class TwigGlobalSubscriber implements EventSubscriberInterface
     public function __construct(Environment $twig, ParamRepository $paramRepository)
     {
         $this->twig = $twig;
-        $tab = [];
-        foreach ($paramRepository->findAll() as $parametre) {
-            $tab[$parametre->getNom()] = $parametre->getValue();
-        }
-        $this->params = $tab;
+        $this->params = $paramRepository->getAll();
     }
 
     public function injectGlobalVariables()

@@ -40,4 +40,26 @@ class ParamRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function getText(string $nom): ?string
+    {
+        $result = $this->createQueryBuilder('p')
+            ->where('p.nom = :nom')
+            ->setParameter('nom', $nom)
+            ->getQuery()
+            ->getOneOrNullResult();
+        if (!$result) {
+            return null;
+        }
+        return strip_tags(json_decode($result->getValue(), true)['blocks'][0]['data']['text']);
+    }
+
+    public function getAll(): array
+    {
+        $tab = [];
+        foreach ($this->findAll() as $parametre) {
+            $tab[$parametre->getNom()] = $parametre->getValue();
+        }
+        return $tab;
+    }
 }
