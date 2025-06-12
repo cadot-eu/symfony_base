@@ -1,0 +1,22 @@
+{% if 'Edition' in field.crud|keys %}
+	<td>
+		{% if attribute(ligne,fieldName) %}
+			{% if attribute(ligne,fieldName) and attribute(ligne,fieldName)|split('.')|last in ['jpg', 'jpeg', 'png', 'gif', 'svg'] %}
+				{% set imagename = attribute(ligne,fieldName)|split('_')|first %}
+				<img data-controller='bigpicture' data-bigpicture-options-value='{"imgSrc": "{{ asset(' uploads/' ~ app.request.get(' entity') ~ ' /' ~ attribute(ligne,fieldName))}}"}' src="{{ asset('uploads/' ~ app.request.get('entity') ~ '/' ~ attribute(ligne,fieldName))|imagine_filter('minicarree') }} " alt="{{imagename}}"/>
+			{% else %}
+				{% set extension = attribute(ligne,fieldName)|split('.')|last %}
+				<a class="btn btn-sm btn-outline-primary text-decoration-none" href="{{asset('uploads/' ~ app.request.get('entity') ~ '/' ~ attribute(ligne,fieldName))}}" target="_blank" data-bs-toggle="tooltip" data-bs-title="Télécharger le fichier {{attribute(ligne,fieldName)}}">
+					<i class="bi bi-file-earmark-{{extension}}"></i>
+				</a>
+			{% endif %}
+		{% endif %}
+		<a href="#" class="btn btn-sm btn-outline-secondary text-decoration-none" data-controller="uploadFile" data-uploadfile-folder-name-value="{{fieldName}}" data-uploadfile-entity-value="{{app.request.get('entity')}}" data-uploadfile-field-value="{{fieldName}}" data-uploadfile-id-value="{{ligne.id}}" data-action="click->uploadFile#chooseFile" data-turbo="false" data-bs-toggle="tooltip" data-bs-title="Ajouter ou remplacer le fichier">
+			<i class="bi bi-upload"></i>
+		</a>
+	</td>
+{% else %}
+	<td>
+		{{attribute(ligne, fieldName)|raw}}
+	</td>
+{% endif %}

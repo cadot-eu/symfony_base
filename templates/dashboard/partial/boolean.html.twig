@@ -1,0 +1,13 @@
+{% if 'Edition' in field.crud|keys and field.crud.Edition==true %}
+	<td>
+		<div class="onecheckselect" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id})}}">
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" name="{{fieldName}}" value="{{attribute(ligne, fieldName)}}" {% if attribute(ligne, fieldName)==true %} checked {% endif %}>
+			</div>
+		</div>
+	</td>
+{% else %}
+	<td>
+		{{attribute(ligne, fieldName)|raw}}
+	</td>
+{% endif %}

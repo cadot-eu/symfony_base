@@ -1,0 +1,217 @@
+# See dos how to configure the bundle: https://symfony.com/doc/current/bundles/LiipImagineBundle/basic-usage.html
+# pour allfilter documentation on https://imagine.readthedocs.io/en/stable/usage/effects.html
+parameters:
+#liip_imagine.optipng.binary: /usr/bin/optipng
+liip_imagine:
+  messenger: false
+  twig:
+    mode: lazy
+  webp:
+    generate: true
+  # valid drivers options include "gd" or "gmagick" or "imagick"
+  driver: "imagick"
+  # configure resolvers
+  resolvers:
+    # setup the default resolver
+    default:
+      # use the default web path
+      web_path: ~
+  controller:
+    #redirect_response_code: 302 #pour éviter erreur https to http
+  # your filter sets are defined here
+  filter_sets:
+    cache: ~
+
+    carousel:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          heighten: 300
+      # post_processors:
+      #   optipng: { strip_all: false, level: 7 }
+
+    bande:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        crop:
+          size: [700, 200]
+          start: [0, 0]
+          mode: outbound
+
+    bandeau:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 1920
+          allow_upscale: false
+        #allfilter: ["colorize:#f18322,gamma:1.6"]
+
+    bandeaufixe:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        thumbnail:
+          size: [1300, 500]
+          mode: outbound
+
+    petitbandeau:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        thumbnail:
+          size: [300, 200]
+          mode: outbound
+
+    petitbanderole:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        thumbnail:
+          size: [300, 50]
+          mode: outbound
+
+    lazy:
+      jpeg_quality: 20
+      png_compression_level: 1
+      filters:
+        relative_resize:
+          widen: 64
+          allow_upscale: false
+
+    fullhd:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 1920
+          allow_upscale: false
+
+    hd:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 1080
+          allow_upscale: false
+
+    grand:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 900
+          allow_upscale: false
+
+    moyen:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 600
+          allow_upscale: false
+
+    moyenback:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 600
+          allow_upscale: false
+        allfilter: ["gamma:4"]
+
+    moyencarree:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        thumbnail:
+          size: [550, 550]
+          mode: outbound
+
+    petit:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 300
+          allow_upscale: false
+
+    petitcarree:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        thumbnail:
+          size: [300, 300]
+          mode: outbound
+
+    minicarree:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        thumbnail:
+          size: [128, 128]
+          mode: outbound
+
+    mini:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 128
+          allow_upscale: false
+
+    icone50:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 50
+          allow_upscale: false
+
+    label:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 100
+          allow_upscale: false
+
+    icone:
+      jpeg_quality: 80
+      png_compression_level: 6
+      filters:
+        auto_rotate: ~
+        relative_resize:
+          widen: 32
+
+    favicon:
+      png_compression_level: 6
+      format: png
+      filters:
+        relative_resize:
+          widen: 32
+
+    #pngspeed : #install optipng by apt
+    #    quality : 75
+    #    post_processors:
+    #        optipng: { strip_all: false, level: 5 }     #on garde les exif

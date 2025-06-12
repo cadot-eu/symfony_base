@@ -236,7 +236,10 @@ export default class extends Controller {
             if (data.success) {
                 // Notification de succès
                 if (typeof flasher !== 'undefined') {
-                    flasher.success('Contenu mis à jour avec succès');
+                    this.element.classList.add('flash');
+                    setTimeout(() => {
+                        this.element.classList.remove('flash');
+                    }, 1000);
                     // Onm et le contenu à jour
                     this.contentValue = JSON.stringify(outputData);
 

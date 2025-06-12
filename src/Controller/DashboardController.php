@@ -10,7 +10,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use ReflectionClass;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/dashboard', name: 'dashboard_')]
@@ -30,9 +29,35 @@ class DashboardController extends AbstractController
             ['entities' => $this->getEntitiesName()]
         );
     }
+    #[Route('/clone/{entity}/{id}', name: 'clone_entity')]
+    public function cloner(string $entity, int $id, EntityManagerInterface $em, Request $request)
+    {
+        $entityClass = 'App\\Entity\\' . ucfirst($entity);
+        $originalEntity = $em->getRepository($entityClass)->find($id);
+
+        $clonedEntity = clone $originalEntity;
+        $reflection = new ReflectionClass($clonedEntity);
+        foreach ($reflection->getProperties() as $property) {
+            foreach ($property->getAttributes() as $attribute) {
+                if ($attribute->getName() === 'Doctrine\ORM\Mapping\OneToMany') {
+                    $getter = 'get' . ucfirst($property->getName());
+                    $setter = 'add' . ucfirst(substr($property->getName(), 0, -1));
+                    foreach ($clonedEntity->$getter() as $item) {
+                        $clonedEntity->$setter(clone $item);
+                    }
+                }
+            }
+        }
+
+        $em->persist($clonedEntity);
+        $em->flush();
+
+        return $this->redirect($request->headers->get('referer'));
+    }
 
     #[Route('/update/{entity}/{field}/{id}', name: 'update_field', methods: ['POST', 'GET'])]
-    public function updateField(string $entity, string $field, int $id, Request $request, EntityManagerInterface $em): Response
+    #[Route('/update/{entity}/{field}/{id}/{associationType}', name: 'update_field_association', methods: ['POST', 'GET'])]
+    public function updateField(string $entity, string $field, int $id, string $associationType = null, Request $request, EntityManagerInterface $em): Response
     {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['value'])) {
@@ -47,27 +72,25 @@ class DashboardController extends AbstractController
 
         //on vérifie si on est dans une association avec ce field
         if ($metadata->hasAssociation($field)) {
-            $entityClass = 'App\\Entity\\' . ucfirst($entity);
-            $entityR = $em->getRepository($entityClass)->find($id);
-            $methodGetter = 'get' . ucfirst($field);
-            $assocEntiies = $entityR->$methodGetter();
-            //si on a une valeur false on supprime l'entité de l'assocaition
-            $classEnfant = $metadata->getAssociationMapping($field)->targetEntity;
-            if ($data['value']['value'] == true) {
-                //on ajoute l'objet
-                $addMethod = 'add' . substr(ucfirst($field), 0, -1);
-                $entityR->$addMethod($em->getRepository($classEnfant)->find($data['value']['associationid']));
-            } else {
-                //on retire l'objet
-                $removeMethod = 'remove' . substr(ucfirst($field), 0, -1);
-                $entityR->$removeMethod($em->getRepository($classEnfant)->find($data['value']['associationid']));
+            if ($associationType == 'ManyToOneAssociationMapping') {
+                $entityClass = 'App\\Entity\\' . ucfirst($entity);
+                $entityR = $em->getRepository($entityClass)->find($id);
+                $classEnfant = $metadata->getAssociationMapping($field)->targetEntity;
+                $setMethod = 'set' . ucfirst($field);
+                $entityR->$setMethod($data['value'] ? $em->getRepository($classEnfant)->find($data['value']) : null);
             }
         } else {
             $fieldMapping = $metadata->getFieldMapping($field);
             $value = $data['value'];
             if (isset($fieldMapping['enumType'])) {
                 $enumClass = $metadata->getFieldMapping($field)['enumType'];
-                $value = constant($enumClass . '::' . $data['value']);
+                //is $data['value'] est un tableau
+                if (is_array($data['value'])) {
+                    $value = array_map(function ($value) use ($enumClass) {
+                        return constant($enumClass . '::' . $value);
+                    }, $data['value']);
+                } else
+                    $value = constant($enumClass . '::' . $data['value']);
             }
             //si on demande un datetime on convertis le string en datetime
             if (($metadata->getTypeOfField($field) == 'datetime' || $metadata->getTypeOfField($field) == 'date')) {
@@ -83,126 +106,131 @@ class DashboardController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/entities/{entity}/{enfantid}', name: 'list_entities', methods: ['GET', 'POST'])]
+
     #[Route('/entities/{entity}/{parent}/{parentid}', name: 'list_entities_parent', methods: ['GET', 'POST'])]
-
-    public function listEntities(string $entity, Request $request, EntityManagerInterface $em, $enfantid = null, $parent = null, $parentid = null): Response
+    #[Route('/entities/{entity}', name: 'list_entities')]
+    public function listEntity(string $entity, EntityManagerInterface $em, string $parent = null, string $parentid = null): Response
     {
-        $entityClass = 'App\\Entity\\' . ucfirst($entity);
+        $class = 'App\\Entity\\' . ucfirst($entity);
+        if (!class_exists($class)) {
+            throw $this->createNotFoundException("Entité introuvable");
+        }
+        $repo = $em->getRepository($class);
+        $objects['repo'] = $repo->findAll();
 
-        if (!class_exists($entityClass)) {
-            $this->addFlash('error', "L'entité n'existe pas.");
+        // On suppose au moins 1 objet pour récupérer la structure
+        $sample = $objects['repo'][0] ?? new $class();
+        // Récupération des attributs via Doctrine
+        $metadata = $em->getClassMetadata($class);
+        $fields = $metadata->getFieldNames();
+        $assocs = $metadata->getAssociationNames();
+        // Préparer la liste des objets pour Twig (par attribut)
+        foreach ($fields as $field) {
+            $objects['fields'][$field] = [
+                'type' => $metadata->getTypeOfField($field),
+                'crud' => method_exists($sample, 'cruds') &&  isset($sample->cruds()[$field]) ? $sample->cruds()[$field] : null,
+            ];
         }
 
-        $repository = $em->getRepository($entityClass);
-        if ($request->isMethod('POST') && $request->request->has('criteria')) {
-            $criteria = $request->request->get('criteria');
-            $criteriaArray = json_decode($criteria, true);
-            $objects = $repository->findBy($criteriaArray);
-        } else
-            $objects = $repository->findAll();
-        //si on a parentid on ne garde que les objtes qui ont dans leurs parents l'id parentid
-        $ok = [];
-        if ($parentid) {
-            foreach ($objects as $key => $object) {
-                $method = 'get' . ucfirst($parent);
-                $parents = $object->$method();
-                if (count($parents) == 0) {
-                    unset($objects[$key]);
-                    continue;
-                }
-                foreach ($parents as $pere) {
-                    if ($pere->getId() == $parentid) {
-                        $ok[] = $object;
-                    }
-                }
-            }
-            $objects = $ok;
+        // Préparer la liste des objets pour Twig (par association)
+        $assocObjets = [];
+
+        foreach ($assocs as $assoc) {
+            $metas = $metadata->getAssociationMapping($assoc);
+            $typeAssociation = substr(get_class($metas), strlen('Doctrine\ORM\Mapping\\'));
+            $assocObjets[$assoc] = [
+                'type' => $typeAssociation,
+                'metas' => $metas,
+                'values' => $em->getRepository($metas->targetEntity)->findAll(),
+                'crud' => method_exists($sample, 'cruds') &&  isset($sample->cruds()[$assoc]) ? $sample->cruds()[$assoc] : null,
+                'source' => substr($metas->sourceEntity, strlen('App\\Entity\\')),
+                'target' => substr($metas->targetEntity, strlen('App\\Entity\\'))
+            ];
         }
-        //on récupère le type des attributs
-        $objectsType = [];
-        $objectsValues = [];
-        $objetsAttributs = [];
-        $objetsActions = [];
-        $metadata = $em->getClassMetadata($entityClass);
+        //on ajoute les attributs
         foreach ($metadata->getFieldNames() as $field) {
             $fieldMapping = $metadata->getFieldMapping($field);
-            $reflectionProperty = new \ReflectionProperty($entityClass, $field);
+            $reflectionProperty = new \ReflectionProperty($class, $field);
+            $objetsAttributs = [];
+
             foreach ($reflectionProperty->getAttributes() as $attribute) {
-                $objetsAttributs[$field][explode('\\', $attribute->getName())[count(explode('\\', $attribute->getName())) - 1]] = [
-                    'arguments' => $attribute->getArguments(),
-                ];
+                $attributeName = explode('\\', $attribute->getName())[count(explode('\\', $attribute->getName())) - 1];
+                $arguments = $attribute->getArguments();
+
+                // Traitement spécial pour les attributs Regex
+                if ($attributeName === 'Regex' && isset($arguments['pattern'])) {
+                    $pattern = $arguments['pattern'];
+
+                    // Nettoyer la regex : supprimer les délimiteurs PHP
+                    if (preg_match('/^\/(.*)\/[gimuy]*$/i', $pattern, $matches)) {
+                        $arguments['pattern'] = $matches[1];
+                    }
+                }
+
+                $objetsAttributs[$attributeName] = $arguments;
             }
+
+            // Ajouter les attributs
+            if (isset($objects['fields'][$field]))
+                $objects['fields'][$field]['attributs'] = $objetsAttributs;
+            if (isset($assocObjets[$field]))
+                $assocObjets[$field]['attributs'] = $objetsAttributs;
+
+            // Pour les attributs enums...
             if (isset($fieldMapping['enumType'])) {
                 $enumClass = $fieldMapping['enumType'];
-
-                // Vérifie si la classe existe et est une enum
                 if (enum_exists($enumClass)) {
-                    // On récupère les valeurs possibles (cas et valeurs)
                     $values = [];
-
                     foreach ($enumClass::cases() as $case) {
                         $values[$case->name] = $case->value;
                     }
-
-                    $objectsType[$field] = 'enum';
-                    $objectsValues[$field] = $values;
+                    $objects['fields'][$field]['enumValues'] = $values;
+                    $objects['fields'][$field]['type'] = 'enum';
                 }
             } else {
-                $objectsType[$field] = $metadata->getTypeOfField($field);
+                $objects['fields'][$field]['typeMapping'] = $metadata->getTypeOfField($field);
             }
         }
-        foreach ($objects as $object) {
-            if (method_exists($object, 'Actions')) {
-                foreach ($object->Actions() as $action => $url) {
-                    //on remplace les [] par les propriétés de l'objet
-                    $objetsActions[$object->getId()][$action] = preg_replace_callback('/\[(.*?)\]/', function ($matches) use ($object) {
-                        return $object->{'get' . ucfirst($matches[1])}();
-                    }, $url);
-                }
-            }
-        }
-        //on regarde si on a des relations
-        $metadata = $em->getClassMetadata($entityClass);
-        $associations = $metadata->getAssociationMappings();
-        $parent = null;
-        foreach ($associations as $parentNom => $association) {
-            if (in_array(\get_class($association), ['Doctrine\ORM\Mapping\ManyToOneAssociationMapping'])) {
-                $parent = $parentNom;
-            }
-        }
-        return $this->render('dashboard/index.html.twig', [
-            'objects' => $objects,
-            'objectsType' => $objectsType,
-            'objectsValues' => $objectsValues,
-            'objetsAttributs' => $objetsAttributs,
-            'objetsActions' => $objetsActions,
+        // Récupération de la config CRUD et ajout de certaine propriétés
+        $cruds = method_exists($sample, 'cruds') ? $sample->cruds() : [];
+        $objects['InfoIdCrud'] = isset($cruds['id']) &&  isset($cruds['id']['InfoIdCrud']) ? $cruds['id']['InfoIdCrud'] : null;
+        $objects['ActionsTableauEntite'] = isset($cruds['ActionsTableauEntite']) ? $cruds['ActionsTableauEntite'] : null;
+        $objects['Ordre'] = isset($cruds['Ordre']) ? $cruds['Ordre'] : null;
+        $objects['Actions'] = isset($cruds['id']) &&  isset($cruds['id']['Actions']) ? $cruds['id']['Actions'] : null;
+
+        return $this->render('/dashboard/index.html.twig', [
+            'objets' => $objects,
+            'assocs' => $assocObjets,
+            'cruds' => $cruds,
             'entity' => $entity,
             'entities' => $this->getEntitiesName(),
-            'associations' => $associations,
-            'parent' => $parent,
-
+            'parentsOfEntity' => null, // donné par request ou par assocs
         ]);
     }
+
+
+
+
+
     #[Route('/delete/{entity}/{id}', name: 'delete_entity', methods: ['DELETE'])]
-    public function deleteEntity(string $entity, string $id,  EntityManagerInterface $em): JsonResponse
+    public function deleteEntity(string $entity, string $id,  EntityManagerInterface $em, Request $request): Response
     {
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
         $entity = $em->getRepository($entityClass)->find($id);
 
         if (!$entity) {
-            return new JsonResponse(['error' => 'Entity not found'], 404);
+            $this->addFlash('error', "L'entité $entity n'a pas pu étre trouvée.");
         }
 
         $em->remove($entity);
         $em->flush();
 
-        return new JsonResponse(['success' => true]);
+        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('dashboard'), 303);
     }
     //dashboard_create_entity
-    #[Route('/create/{entity}', name: 'create_entity', methods: ['POST'])]
-    #[Route('/create/{entity}/{entityParentId}/{entityParent}', name: 'create_child_entity', methods: ['POST'])]
-    public function createEntity(string $entity, string $entityParentId = null, string $entityParent = null, EntityManagerInterface $em, SerializerInterface $serializer): Response
+    #[Route('/create/{entity}', name: 'create_entity')]
+    #[Route('/create/{entity}/{entityParent}/{entityParentId}', name: 'create_child_entity')]
+    public function createEntity(string $entity, string $entityParentId = null, string $entityParent = null, EntityManagerInterface $em): Response
     {
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
         if (!class_exists($entityClass)) {
@@ -219,15 +247,18 @@ class DashboardController extends AbstractController
                     continue 2;
                 }
                 //pour le cas des relations
-                if ($entityParentId && ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToOne' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToOne')) {
+                if (($entityParentId && ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToOne' || $attribute->getName() === 'Doctrine\ORM\Mapping\OneToOne'))) {
                     //on récupère l'entité parent par son id
-                    $entityParent = $em->getRepository($property->getType()->getName())->find($entityParentId);
-                    if ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany') {
-                        $addMethod = 'add' . ucfirst($property->getName());
-                    } else {
-                        $addMethod = 'set' . ucfirst($property->getName());
-                    }
-                    $entityN->$addMethod($entityParent);
+                    $entityParentR = $em->getRepository($property->getType()->getName())->find($entityParentId);
+                    $setMethod = 'set' . ucfirst($property->getName());
+                    $entityN->$setMethod($entityParentR);
+                    //au cas ou pas de persist cascade mis
+                    $inversedBy = lcfirst($attribute->getArguments()['inversedBy']);
+                    $addMethod = 'add' . substr($inversedBy, 0, -1);
+                    $entityParentR->$addMethod($entityN);
+                    $this->em->persist($entityParentR);
+                    $this->em->flush();
+                    $entityParent = $property->getName();
                     continue 2;
                 }
                 if ($entityParentId && ($attribute->getName() === 'Doctrine\ORM\Mapping\ManyToMany')) {
@@ -331,8 +362,71 @@ class DashboardController extends AbstractController
         $filename = preg_replace('/[^a-zA-Z0-9_-]/', '-', iconv('UTF-8', 'ASCII//TRANSLIT', pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)))
             . '_' . date('Ymd_His') . '_' . uniqid() . '.' . $file->guessExtension();
         $file->move($directory, $filename);
+        //on efface si on a un ancien fichier
+        $getter = 'get' . ucfirst($field);
+        $oldFilename = $entity->$getter();
+        if ($oldFilename && file_exists($directory . '/' . $oldFilename)) {
+            unlink($directory . '/' . $oldFilename);
+        }
         $entity->$setter($filename);
         $this->em->flush();
         return new JsonResponse(['success' => true]);
+    }
+
+
+    #[Route('/reorder', name: '_reorder', methods: ['POST'])]
+    public function reorder(Request $request): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+
+            if (!isset($data['entity'], $data['field'], $data['id'], $data['newOrder'])) {
+                return new JsonResponse(['success' => false, 'message' => 'Données manquantes'], 400);
+            }
+
+            $entityName = $data['entity'];
+            $field = $data['field'];
+            $id = (int) $data['id'];
+            $newOrder = (int) $data['newOrder'];
+
+            $entityClass = 'App\\Entity\\' . $entityName;
+            if (!class_exists($entityClass)) {
+                return new JsonResponse(['success' => false, 'message' => 'Entité introuvable'], 404);
+            }
+
+            $repository = $this->em->getRepository($entityClass);
+            $getter = 'get' . ucfirst($field);
+            $setter = 'set' . ucfirst($field);
+
+            $entities = $repository->findBy([], [$field => 'ASC']);
+            $targetEntity = $repository->find($id);
+
+            if (!$targetEntity || !method_exists($targetEntity, $getter) || !method_exists($targetEntity, $setter)) {
+                return new JsonResponse(['success' => false, 'message' => 'Entité invalide'], 400);
+            }
+
+            // Retire l'entité ciblée de la liste
+            $entities = array_filter($entities, fn($e) => $e->getId() !== $id);
+
+            // Insère l'entité à sa nouvelle position dans la liste
+            array_splice($entities, $newOrder - 1, 0, [$targetEntity]);
+
+            // Réindexe proprement toutes les entités
+            foreach (array_values($entities) as $index => $entity) {
+                $entity->$setter($index + 1);
+            }
+
+            $this->em->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Ordre mis à jour avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Erreur : ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

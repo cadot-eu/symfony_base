@@ -1,271 +1,286 @@
-{% macro formatFieldName(field) %}
-	{% set mot = '' %}
-	{% for letter in field|split('') %}
-		{% if letter == letter|upper and letter != '*' %}
-			{% set mot = mot ~ ' ' ~ letter|lower %}
-		{% else %}
-			{% set mot = mot ~ letter %}
-		{% endif %}
-	{% endfor %}
-	{{ mot|replace({'_': ' '}) }}
+{% macro formatFieldName(field) %}{% endmacro %}
+{% macro fieldClean(field) %}
+	{% set lastChar = field|slice(-1)|trim %}
+	{% set clean = field %}
+	{% if lastChar matches('/[^a-zA-Z]/') %}
+		{% set clean = field|slice(0, -1) %}
+	{% endif %}
+	{{ clean|striptags|trim }}
 {% endmacro %}
-<turbo-stream target="entity_list" action="replace" id="entity_list_stream">
-	<template>
-		<div class="d-flex justify-content-end mb-2">
-			<div class="d-flex gap-2">
-				{% if objects[0] is defined and objects[0].addButtonsToCrud() is defined %}
-					{% for label,bouton in objects[0].addButtonsToCrud() %}
-						<a href="{{ bouton.url }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ label }}" {{bouton.target is defined ? 'target="' ~ bouton.target ~ '"' : ''}}>
-							{% if bouton.icon is defined and bouton.icon != '' %}
-								<i class="{{ bouton.icon }}"></i>
-							{% else %}
-								{{ label }}
-							{% endif %}
-						</a>
-					{% endfor %}
-				{% endif %}
-				{% if parent  is null %}
-					<form class="d-inline ms-4" method="post" action="{{ path('dashboard_create_entity', {'entity': entity}) }}">
-						<button type="submit" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="Ajouter un {{ entity|split('\\')|last }}">Ajouter</button>
-					</form>
-				{% else %}
-					<a href="{{ path('dashboard_list_entities', {'entity': parent }) }}" class="btn btn-primary">Retour vers le Parent
-						{{'"' ~ parent~'"'}}</a>
-				{% endif %}
-			</div>
-		</div>
-		{% if objects is not empty %}
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th>ID</th>
-						{% for field in objects[0].fieldsCrud|default %}
-							{% if field not in (associations|keys) %}
-								<th class=" text-center">{{ _self.formatFieldName(field) }}</th>
-							{% endif %}
-						{% endfor %}
-						{% for association in associations %}
-							{% if association.fieldName in objects[0].fieldsCrud %}
-								<th>{{ association.fieldName|split(' ')|last }}
-								</th>
-							{% endif %}
-						{% endfor %}
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for object in objects|sort %}
-						<tr id="ligne_{{ object.id }}">
-							<td>
-								{% if objects[0] is defined and objects[0].InfoIdCrud is defined %}
-									<p class="position-relative">
-										{{ object.id }}
-										<span class="position-absolute top-0 start-100 translate-middle text-primary" style="font-size: 0.5em;" data-bs-toggle="tooltip" data-bs-title="{{ objects[0].InfoIdCrud|ToList }}">
-											<i class="bi bi-info-circle"></i>
-										</span>
-									</p>
 
-								{% else %}
-									{{ object.id }}
-								{% endif %}
-							</td>
-							{% for field in objects[0].fieldsCrud|default%}
-								{% if field not in (associations|keys)%}
-									{# initialisation #}
-									{% if field|slice(-1) == '*' %}
-										{% set champ = field|slice(0, -1) %}
-										{% set type = objectsType[champ] %}
-										{% set attrs = objetsAttributs[champ]%}
 
-										{% if type=="date" %}
-											{% if attribute(object, champ)%}
-												{% set texte=attribute(object, champ)|date('Y-m-d') %}
-											{% else %}
-												{% set texte='' %}
-											{% endif %}
-										{% elseif type=="datetime" %}
-											{% if attribute(object, champ)%}
-												{% set texte = attribute(object, champ)|date('Y-m-d\\TH:i') %}
+<div class="d-flex justify-content-end mb-2">
+	<div class="d-flex gap-2">
+		{% if objects[0] is defined and objects[0].addButtonsToCrud() is defined %}
+			{% for label,bouton in objects[0].addButtonsToCrud() %}
+				<a href="{{ bouton.url }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ label }}" {{bouton.target is defined ? 'target="' ~ bouton.target ~ '"' : ''}}>
+					{% if bouton.icon is defined and bouton.icon != '' %}
+						<i class="{{ bouton.icon }}"></i>
+					{% else %}
+						{{ label }}
+					{% endif %}
+				</a>
+			{% endfor %}
+		{% endif %}
+		{% if parent  is null %}
+			<form class="d-inline ms-4" method="post" action="{{ path('dashboard_create_entity', {'entity': entity}) }}">
+				<button type="submit" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="Ajouter un {{ entity|split('\\')|last }}">Ajouter</button>
+			</form>
+		{% else %}
+			<a href="{{ path('dashboard_list_entities', {'entity': parent }) }}" class="btn btn-primary">Retour vers le Parent
+				{{'"' ~ parent~'"'}}</a>
+		{% endif %}
+	</div>
+</div>
+{% if objects is not empty %}
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>ID</th>
+				{% for label,field in objects[0].fieldsCrud|default %}
+					{% if field not in (associations|keys) %}
+						{% set testnumeric = not is_numeric(label) %}
+						<th class="text-center" {% if testnumeric %} data-bs-toggle="tooltip" data-bs-title="{{ label }}" {% endif %}>
+							{{ field }}
+						</th>
+					{% endif %}
+				{% endfor %}
+				{% for association in associationsName %}
+					<th class="text-bold">{{ association }}
+					</th>
+				{% endfor %}
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{dd(cruds)}}
+			{% for object in objects|sort %}
+				<tr id="ligne_{{ object.id }}">
+					<td>
 
-											{% else %}
-												{% set texte='' %}
-											{% endif %}
-										{% else %}
-											{% set texte=attribute(object, champ)|raw %}
-										{% endif %}
-										{% if type == "text" %}
-											<td>
-												<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(object, champ)}}" data-texteditable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
-													<span class="bi bi-pencil"></span>
-												</button>
-												<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('dashboard_get_entity', {'entity': entity, 'id': object.id,'field': champ })}}">
-													<i class="bi bi-search"></i>
-												</button>
-											</td>
-										{% elseif type == "html" %}
-											<td>html</td>
-										{% elseif type == "date" %}
-											<td data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
-												<input type="date" value="{{texte}}">
-											</td>
-										{% elseif type == "datetime" %}
-											<td data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
-												<input type="datetime-local" value="{{texte}}">
-											</td>
-										{% elseif type == "integer" %}
-											<td contenteditable="true" data-controller="editable" data-editable-regex-value="^[0-9.]*$" data-editable-regex-message-value="Cette valeur doit être un entier ou un decimal" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
-										{% elseif type == "string" and  'Regex' in attrs|keys %}
-											{% set regex = attrs.Regex.arguments.pattern %}
-											{% set message = attrs.Regex.arguments.message %}
-											<td contenteditable="true" data-controller="editable" data-editable-regex-value="{{regex}}" data-editable-regex-message-value="{{message}}" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
-										{% elseif type == "enum" %}
-											<td>
-												<select data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
-													{% for case,valeur in objectsValues[champ] %}
-														<option name="{{case}}" value="{{valeur}}" {% if attribute(object, champ) and valeur == attribute(object, champ).value %} selected {% endif %}>{{valeur}}</option>
-													{% endfor %}
-												</select>
-											</td>
-										{% elseif attrs['File'] is defined%}
-											<td>
-												{% if attribute(object, champ) %}
-													{% if attribute(object, champ) and attribute(object, champ)|split('.')|last in ['jpg', 'jpeg', 'png', 'gif', 'svg'] %}
-														{% set imagename = attribute(object, champ)|split('_')|first %}
-														<img data-controller='bigpicture' data-bigpicture-options-value='{"imgSrc": "{{ asset(' uploads/' ~ entity ~ ' /' ~ attribute(object, champ))}}"}' src="{{ asset('uploads/' ~ entity ~ '/' ~ attribute(object, champ))|imagine_filter('minicarree') }} " alt="{{imagename}}"/>
-													{% endif %}
-												{% endif %}
-												<button class="btn btn-xs no-button" data-controller="uploadFile" data-uploadfile-folder-name-value="{{entity}}" data-uploadfile-entity-value="{{entity}}" data-uploadfile-field-value="{{champ}}" data-uploadfile-id-value="{{object.id}}" data-action="click->uploadFile#chooseFile">
-													<i class="bi bi-upload"></i>
-												</button>
-											</td>
-										{% elseif type == "boolean" %}
-											<td>
-												<input type="checkbox" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}" {% if attribute(object, champ) %} checked {% endif %}>
+						{% if cruds.id is defined and cruds.id.InfoIdCrud is defined %}
+							<p class="position-relative">
+								{{ object.id }}
+								<span class="position-absolute top-0 start-100 translate-middle text-primary" style="font-size: 0.5em;" data-bs-toggle="tooltip" data-bs-title="{{ objects[0].InfoIdCrud|ToList }}">
+									<i class="bi bi-info-circle"></i>
+								</span>
+							</p>
 
-											</td>
-										{% else %}
-											<td contenteditable="true" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
-										{% endif %}
+						{% else %}
+							{{ object.id }}
+						{% endif %}
+					</td>
+					{% for field in objects[0].fieldsCrud|default%}
+						{% if (_self.fieldClean(field)) not in (associations|keys)%}
+							{# initialisation #}
+							{% if field|slice(-1) == '*' %}
+								{% set champ = field|slice(0, -1) %}
+								{% set type = objectsType[champ] %}
+								{% set attrs = objetsAttributs[champ]%}
+
+								{% if type=="date" %}
+									{% if attribute(object, champ)%}
+										{% set texte=attribute(object, champ)|date('Y-m-d') %}
 									{% else %}
-										{% set champ = field %}
-										{% set texte=attribute(object, champ)|raw %}
-										{% if texte|length > 25 %}
-											<td>
-												<span data-controller="tooltip" data-tooltip-html-value="{{texte}}">{{texte|u.truncate(8, '...')}}</span>
-											</td>
+										{% set texte='' %}
+									{% endif %}
+								{% elseif type=="datetime" %}
+									{% if attribute(object, champ)%}
+										{% set texte = attribute(object, champ)|date('Y-m-d\\TH:i') %}
+
+									{% else %}
+										{% set texte='' %}
+									{% endif %}
+								{% else %}
+									{% set texte=attribute(object, champ)|raw %}
+								{% endif %}
+								{% if type == "text" %}
+									<td>
+										<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(object, champ)}}" data-texteditable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+											<span class="bi bi-pencil"></span>
+										</button>
+										<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('dashboard_get_entity', {'entity': entity, 'id': object.id,'field': champ })}}">
+											<i class="bi bi-search"></i>
+										</button>
+									</td>
+								{% elseif type == "html" %}
+									<td>html</td>
+								{% elseif type == "date" %}
+									<td data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+										<input type="date" value="{{texte}}">
+									</td>
+								{% elseif type == "datetime" %}
+									<td data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+										<input type="datetime-local" value="{{texte}}">
+									</td>
+								{% elseif type == "integer" %}
+									<td contenteditable="true" data-controller="editable" data-editable-regex-value="^[0-9.]*$" data-editable-regex-message-value="Cette valeur doit être un entier ou un decimal" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
+								{% elseif type == "string" and  'Regex' in attrs|keys %}
+									{% set regex = attrs.Regex.arguments.pattern %}
+									{% set message = attrs.Regex.arguments.message %}
+									<td contenteditable="true" data-controller="editable" data-editable-regex-value="{{regex}}" data-editable-regex-message-value="{{message}}" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
+								{% elseif type == "enum" %}
+									<td>
+										<select data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">
+											{% for case,valeur in objectsValues[champ] %}
+												<option name="{{case}}" value="{{valeur}}" {% if attribute(object, champ) and valeur == attribute(object, champ).value %} selected {% endif %}>{{valeur}}</option>
+											{% endfor %}
+										</select>
+									</td>
+								{% elseif attrs['File'] is defined%}
+									<td>
+										{% if attribute(object, champ) %}
+											{% if attribute(object, champ) and attribute(object, champ)|split('.')|last in ['jpg', 'jpeg', 'png', 'gif', 'svg'] %}
+												{% set imagename = attribute(object, champ)|split('_')|first %}
+												<img data-controller='bigpicture' data-bigpicture-options-value='{"imgSrc": "{{ asset(' uploads/' ~ entity ~ ' /' ~ attribute(object, champ))}}"}' src="{{ asset('uploads/' ~ entity ~ '/' ~ attribute(object, champ))|imagine_filter('minicarree') }} " alt="{{imagename}}"/>
+											{% endif %}
+										{% endif %}
+										<button class="btn btn-xs no-button" data-controller="uploadFile" data-uploadfile-folder-name-value="{{entity}}" data-uploadfile-entity-value="{{entity}}" data-uploadfile-field-value="{{champ}}" data-uploadfile-id-value="{{object.id}}" data-action="click->uploadFile#chooseFile">
+											<i class="bi bi-upload"></i>
+										</button>
+									</td>
+								{% elseif type == "boolean" %}
+									<td>
+										<input type="checkbox" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}" {% if attribute(object, champ) %} checked {% endif %}>
+
+									</td>
+								{% else %}
+									<td contenteditable="true" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': entity, 'field': champ, 'id': object.id})}}">{{texte}}</td>
+								{% endif %}
+							{% else %}
+								{% set champ = field %}
+								{% set texte=attribute(object, champ)|raw %}
+								{% if texte|length > 25 %}
+									<td>
+										<span data-controller="tooltip" data-tooltip-html-value="{{texte}}">{{texte|u.truncate(8, '...')}}</span>
+									</td>
+								{% else %}
+									<td>{{ texte }}</td>
+								{% endif %}
+							{% endif %}
+						{% endif %}
+					{% endfor %}
+					{% for entityParent,association in associations %}
+						{% if  association.fieldName in objects[0].fieldsCrud%}
+							{# attribute(object, association.fieldName)  #}
+							{% set typeAssociation = constant('class',association)|split('\\')|last %}
+							<td>
+								{% if typeAssociation == "ManyToOneAssociationMapping" %}
+									{# si modifiable avec un * #}
+									{% if(association.fieldName~'*' in objects[0].fieldsCrud)%}
+										<select class="form-select form-select-sm" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field_association', {'entity': entity, 'field': association.fieldName, 'id': object.id, 'associationType': typeAssociation})}}">
+											{% for id,item in repository(association.fieldName) %}
+												<option name="" value="null"></option>
+												<option name="{{ id}}" value="{{ item.id }}">{{ item }}</option>
+											{% endfor %}
+										</select>
+									{% else %}
+										{# si pas modifiable on l'affiche #}
+										{{ attribute(object, association.fieldName) }}
+									{% endif %}
+
+								{% elseif typeAssociation == "OneToOneInverseSideMapping" %}
+									<form method="post" class="d-inline" action="{{ path('dashboard_list_entities_parent', {'parent': association.mappedBy, 'parentid': object.id, 'entity': association.targetEntity|split('\\')|last} ) }}" data-turbo="false">
+										<button type="submit" class="btn btn-xs no-button">
+											<i class="bi bi-arrow-right-circle" title="voir les {{ association.targetEntity|split('\\')|last }} de ce {{ entity|split('\\')|last }}"></i>
+										</button>
+									</form>
+									<div class="d-flex flex-wrap">
+										{% for child in repository(association.targetEntity) %}
+											{% if 'switch' in attribute(child, 'type') %}
+												<div class="form-check col-6" ">
+													{% set checked = '' %}
+													{% for assoc in attribute(object, association.fieldName)%}
+														{% if assoc.id == child.id %}
+															{% set checked = 'checked="checked' %}
+														{% endif %}
+													{% endfor %}
+													<input class="form-check-input" type="checkbox" data-editable-associationid-value="{{ child.id }}" id="child_{{ child.id }}" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'field': association.fieldName, 'entity': entity|split('\\')|last, 'id': object.id})}}" {{ checked }}>
+													<label class="form-check-label" for="child_{{ child.id }}">
+														{{ child }}
+													</label>
+												</div>
+											{% endif %}
+										{% endfor %}
+									</div>
+								{% elseif typeAssociation == "ManyToManyOwningSideMapping"  %}
+									<form method="post" class="d-inline" action="{{ path('dashboard_list_entities_parent', {'parent': association.inversedBy, 'parentid': object.id, 'entity': association.targetEntity|split('\\')|last} ) }}" data-turbo="false">
+										<button type="submit" class="btn btn-xs no-button">
+											<i class="bi bi-arrow-right-circle" title="voir les {{ association.targetEntity|split('\\')|last }} de ce {{ entity|split('\\')|last }}"></i>
+										</button>
+									</form>
+									<div class="d-flex flex-wrap">
+										{% for child in repository(association.targetEntity) %}
+											{% if 'switch' in attribute(child, 'type') %}
+												<div class="form-check col-6" ">
+													{% set checked = '' %}
+													{% for assoc in attribute(object, association.fieldName)%}
+														{% if assoc.id == child.id %}
+															{% set checked = 'checked="checked' %}
+														{% endif %}
+													{% endfor %}
+													<input class="form-check-input" type="checkbox" data-editable-associationid-value="{{ child.id }}" id="child_{{ child.id }}" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'field': association.fieldName, 'entity': entity|split('\\')|last, 'id': object.id})}}" {{ checked }}>
+													<label class="form-check-label" for="child_{{ child.id }}">
+														{{ child }}
+													</label>
+												</div>
+											{% endif %}
+										{% endfor %}
+									</div>
+								{% else  %}
+									{% if typeAssociation == "OneToManyAssociationMapping" or typeAssociation == "ManyToManyInverseSideMapping"%}
+										{% set item = attribute(object, association.fieldName)%}
+										{% if item is iterable %}
+											{% set tooltip = '' %}
+											{% set tooltipLines = [] %}
+											{% for it in item %}
+												{% set line = it.__toString is defined and it.__toString() is not empty ? it.__toString() : it.id %}
+												{% set tooltipLines = tooltipLines|merge([line]) %}
+											{% endfor %}
+
+											{% set tooltip = tooltipLines|join(',') %}
+
+											<span class="" data-bs-toggle="tooltip" data-bs-title="{{ tooltip }}">
+												{{ item|length }}
+											</span>
+											<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': entity, 'entityParentId': item.id, 'entityParent': parent }) }}" data-turbo="false">
+												<button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un objet {{ entity|split('\\')|last }} descendant du  même {{ parent|split('\\')|last }} ">
+													<i class="bi bi-plus"></i>
+												</button>
+											</form>
 										{% else %}
-											<td>{{ texte }}</td>
+											{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
+											{% if item %}
+												{{typeAssociation}}
+
+												{% if parent %}
+													<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': parent, 'entityParentId': item.id, 'entityParent': entity }) }}" data-turbo="false">
+														<button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un objet {{ entity|split('\\')|last }} descendant du  même {{ parent|split('\\')|last }} ">
+															<i class="bi bi-plus"></i>
+														</button>
+													</form>
+												{% endif %}
+											{% endif %}
 										{% endif %}
 									{% endif %}
 								{% endif %}
-							{% endfor %}
-							{% for entityParent,association in associations %}
-								{% if  association.fieldName in objects[0].fieldsCrud%}
-									{# attribute(object, association.fieldName)  #}
-									{% set typeAssociation = constant('class',association)|split('\\')|last %}
-									<td>
-										{% if typeAssociation == "ManyToOneAssociationMapping" %}
-											<form method="post" class="d-inline" action="{{ path('dashboard_list_entities', {'enfantid': object.id, 'entity': association.targetEntity|split('\\')|last} ) }}" data-turbo="false">
-												<input type="hidden" name="criteria" value='{"{{entity|split(' \\')|last|lower}}":{{object.id}}}'>
-												<button type="submit" class="btn btn-xs no-button">
-													<i class="bi bi-arrow-right-circle" title="voir les {{ association.targetEntity|split('\\')|last }} de ce {{ entity|split('\\')|last }}"></i>
-												</button>
-											</form>
-											<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': association.targetEntity|split('\\')|last, 'entityParentId': object.id, 'entityParent': entityParent }) }}" data-turbo="false">
-												<button type="submit" class="btn btn-xs no-button">
-													<i class="bi bi-plus" title="Ajoute un {{ association.targetEntity|split('\\')|last }} à ce {{ entity|split('\\')|last }}"></i>
-												</button>
-											</form>
-										{% elseif typeAssociation == "OneToOneInverseSideMapping" %}
-											<form method="post" class="d-inline" action="{{ path('dashboard_list_entities_parent', {'parent': association.mappedBy, 'parentid': object.id, 'entity': association.targetEntity|split('\\')|last} ) }}" data-turbo="false">
-												<button type="submit" class="btn btn-xs no-button">
-													<i class="bi bi-arrow-right-circle" title="voir les {{ association.targetEntity|split('\\')|last }} de ce {{ entity|split('\\')|last }}"></i>
-												</button>
-											</form>
-											<div class="d-flex flex-wrap">
-												{% for child in repository(association.targetEntity) %}
-													{% if 'switch' in attribute(child, 'type') %}
-														<div class="form-check col-6" ">
-															{% set checked = '' %}
-															{% for assoc in attribute(object, association.fieldName)%}
-																{% if assoc.id == child.id %}
-																	{% set checked = 'checked="checked' %}
-																{% endif %}
-															{% endfor %}
-															<input class="form-check-input" type="checkbox" data-editable-associationid-value="{{ child.id }}" id="child_{{ child.id }}" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'field': association.fieldName, 'entity': entity|split('\\')|last, 'id': object.id})}}" {{ checked }}>
-															<label class="form-check-label" for="child_{{ child.id }}">
-																{{ child }}
-															</label>
-														</div>
-													{% endif %}
-												{% endfor %}
-											</div>
-										{% elseif typeAssociation == "ManyToManyOwningSideMapping"  %}
-											<form method="post" class="d-inline" action="{{ path('dashboard_list_entities_parent', {'parent': association.inversedBy, 'parentid': object.id, 'entity': association.targetEntity|split('\\')|last} ) }}" data-turbo="false">
-												<button type="submit" class="btn btn-xs no-button">
-													<i class="bi bi-arrow-right-circle" title="voir les {{ association.targetEntity|split('\\')|last }} de ce {{ entity|split('\\')|last }}"></i>
-												</button>
-											</form>
-											<div class="d-flex flex-wrap">
-												{% for child in repository(association.targetEntity) %}
-													{% if 'switch' in attribute(child, 'type') %}
-														<div class="form-check col-6" ">
-															{% set checked = '' %}
-															{% for assoc in attribute(object, association.fieldName)%}
-																{% if assoc.id == child.id %}
-																	{% set checked = 'checked="checked' %}
-																{% endif %}
-															{% endfor %}
-															<input class="form-check-input" type="checkbox" data-editable-associationid-value="{{ child.id }}" id="child_{{ child.id }}" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'field': association.fieldName, 'entity': entity|split('\\')|last, 'id': object.id})}}" {{ checked }}>
-															<label class="form-check-label" for="child_{{ child.id }}">
-																{{ child }}
-															</label>
-														</div>
-													{% endif %}
-												{% endfor %}
-											</div>
-										{% else  %}
-											{% if typeAssociation == "OneToManyAssociationMapping" or typeAssociation == "ManyToManyInverseSideMapping"%}
-												{% set item = attribute(object, association.fieldName)%}
-												{% if item is iterable %}
-													{% for it in item %}
-														{{ it.__toString is defined  and it.__toString() != '' ? it.__toString() : it.id }}
-													{% endfor %}
-												{% else %}
-													{{ item.__toString is defined  and item.__toString() != '' ? item.__toString() : item.id }}
-													{% if item %}
-														{{typeAssociation}}
-
-														{% if parent %}
-															<form method="post" class="d-inline" action="{{ path('dashboard_create_child_entity', {'entity': entity, 'entityParentId': item.id, 'entityParent': parent }) }}" data-turbo="false">
-																<button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un objet {{ entity|split('\\')|last }} descendant du  même {{ parent|split('\\')|last }} ">
-																	<i class="bi bi-plus"></i>
-																</button>
-															</form>
-														{% endif %}
-													{% endif %}
-												{% endif %}
-											{% endif %}
-										{% endif %}
-									</td>
-								{% endif %}
-							{% endfor %}
-							<td>
-								<button class="btn btn-danger btn-sm" data-controller="form" data-form-confirmation-value="true" data-form-parent-value="#ligne_{{ object.id }}" data-form-url-value="{{ path('dashboard_delete_entity', {'entity': entity, 'id': object.id })}}" data-form-method-value="DELETE">Supprimer</button>
-								{% if object.Actions() is defined %}
-									{% for action,url in objetsActions[object.id] %}
-										<a href="{{ url }}" class="btn btn-primary btn-sm" target="_blank">
-											{{ action|raw }}
-										</a>
-									{% endfor %}
-								{% endif %}
 							</td>
-
-
-						</tr>
+						{% endif %}
 					{% endfor %}
-				</tbody>
-			</tbody>
-		</table>
-	{% endif %}
-</template></turbo-stream>
+					<td>
+						<button class="btn btn-danger btn-sm" data-controller="form" data-form-confirmation-value="true" data-form-url-value="{{ path('dashboard_delete_entity', {'entity': entity, 'id': object.id })}}" data-form-method-value="DELETE">Supprimer</button>
+						{% if object.Actions() is defined %}
+							{% for action in objetsActions[object.id] %}
+								<a href="{{ action.url }}" {{action.turbo is defined ? 'data-turbo=false : '}} class="btn btn-primary btn-sm" {{action.target is defined ? 'target="' ~ action.target ~ '"' : ''}}>
+									{{ action.icon|raw }}
+								</a>
+							{% endfor %}
+						{% endif %}
+					</td>
+
+
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endif %}

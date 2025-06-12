@@ -1,0 +1,17 @@
+<td {% if objets.Ordre is defined and objets.Ordre.propriete is defined %} style=" cursor: grab;">
+	<span class="">
+		<i class="bi bi-grip-vertical "></i>
+	</span>
+{% else %}
+	>
+{% endif %}
+{% if objets.InfoIdCrud is defined and objets.InfoIdCrud is not empty%}
+	<span class="position-relative">
+		{{ ligne.id }}
+		<span class="exclamation" data-bs-toggle="tooltip" data-bs-title="{{ objets.InfoIdCrud|json_encode }}">
+			<i class="bi bi-info-circle"></i>
+		</span>
+	</span>
+{% else %}
+	{{ ligne.id }}
+{% endif %}</td>

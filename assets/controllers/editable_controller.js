@@ -12,6 +12,12 @@ export default class extends Controller {
         regexMessage: String,
     };
     connect() {
+        //pour les checkboxs
+        if (this.element.classList.contains('enumselect') || this.element.classList.contains('onecheckselect')) {
+            this.element.querySelectorAll('.form-check-input').forEach(el => {
+                el.addEventListener("change", this.sendUpdate.bind(this));
+            });
+        }
         if (this.element.tagName == 'INPUT' && this.element.type == 'checkbox') {
             this.element.addEventListener("change", this.sendUpdate.bind(this));
         }
@@ -21,7 +27,6 @@ export default class extends Controller {
         else if (this.element.querySelector('input') && (this.element.querySelector('input').type == 'date' || this.element.querySelector('input').type == 'datetime-local')) { //pour les datepicker
             this.element.querySelector('input').addEventListener("input", this.sendUpdate.bind(this));
             this.datePicker = true;
-
         }
         else {
             //is on a un regex on l'ajoute avec son message
@@ -45,6 +50,13 @@ export default class extends Controller {
 
     async sendUpdate() {
         let valeur = this.element.textContent.trim();
+        if (this.regexValue) {
+            let regex = new RegExp(this.regexValue);
+            if (!regex.test(valeur)) {
+                flasher.error(this.regexMessageValue + ' : ' + valeur);
+                return;
+            }
+        }
         if (this.element.tagName == 'INPUT' && this.element.type == 'checkbox') {
             if (this.associationidValue == '')
                 valeur = this.element.checked;
@@ -52,22 +64,36 @@ export default class extends Controller {
                 valeur = { 'associationid': this.associationidValue, 'value': this.element.checked };
         }
         else if (this.element.tagName == 'SELECT') {
-            valeur = this.element.options[this.element.selectedIndex].getAttribute('name');
+            if (this.element.getAttribute('multiple') == 'true') {
+                let values = [];
+                for (let i = 0; i < this.element.options.length; i++) {
+                    if (this.element.options[i].selected) {
+                        values.push(this.element.options[i].getAttribute('name'));
+                    }
+                }
+                valeur = values;
+            }
+            else {
+                valeur = this.element.options[this.element.selectedIndex].getAttribute('name');
+
+            }
+        }
+        else if (this.element.classList.contains('onecheckselect')) {
+            valeur = this.element.querySelector('input').checked;
+        }
+        else if (this.element.classList.contains('enumselect')) {
+            let values = [];
+            this.element.querySelectorAll('input.form-check-input:checked').forEach(input => {
+                values.push(input.getAttribute('name'));
+            });
+            valeur = values;
         }
         else if (this.datePicker) {
             if (this.element.querySelector('input').value) {
                 valeur = valeur = this.element.querySelector('input').value;
             }
         }
-        else {
-            if (this.regexValue) {
-                let regex = new RegExp(this.regexValue);
-                if (!regex.test(valeur)) {
-                    flasher.error(this.regexMessageValue + ' : ' + valeur);
-                    return;
-                }
-            }
-        }
+
         let response = await fetch(this.urlValue, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -86,7 +112,7 @@ export default class extends Controller {
             }
         }
         if (!result.success) {
-            this.element.innerText = this.valueValue;
+            this.element.textContent = this.valueValue;
             flasher.error('Erreur lors de la mise à jour du champ');
         }
         else {

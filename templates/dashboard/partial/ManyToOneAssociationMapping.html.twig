@@ -1,0 +1,25 @@
+<td>
+	{# affichage en liste déroulante #}
+	{% if 'radio' in field.crud|keys %}
+		{# affichage en case à cocher #}
+	{% else %}
+		{# si il est en mode edition et qu'on est pas en train d'afficher des enfants d'un parent précis #}
+		{% if 'Edition' in field.crud|keys and field.crud.Edition==true and app.request.get('parent')is not null %}
+			<select class="form-select" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field_association', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id, 'associationType': 'ManyToOneAssociationMapping'})}}">
+				<option name="" value="null"></option>
+				{% for entite in datas.values %}
+					<option name="{{entite.id}}" value="{{entite}}" {% if attribute(ligne, fieldName) and entite.id == attribute(ligne, fieldName).id %} selected {% endif %}>{{entite}}</option>
+				{% endfor %}
+			</select>
+		{% else %}
+			{% if attribute(ligne, fieldName)|length %}
+				<span {% if attribute(ligne, fieldName).__toString()!=attribute(ligne, fieldName).id %} data-bs-toggle="tooltip" data-bs-title="{{ attribute(ligne, fieldName) }}" {% endif %}>{{ attribute(ligne, fieldName).id }}</span>
+				<a href="{{ path('dashboard_list_entities_parent', {'parent': source, 'parentid': ligne.id, 'entity': target} ) }}" class="btn btn-xs no-button" data-bs-toggle="tooltip" data-bs-title="voir Le {{ target }} de ce {{ source }}" data-turbo="false">
+					<i class="bi bi-arrow-right-circle"></i>
+				</a>
+			{% endif %}
+		{% endif %}
+	{% endif %}
+
+
+</td>

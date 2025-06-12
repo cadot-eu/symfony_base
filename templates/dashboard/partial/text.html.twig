@@ -1,0 +1,10 @@
+<td>
+	{% if 'Edition' in field.crud|keys %}
+		<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(ligne, fieldName)}}" data-texteditable-url-value="{{ path('dashboard_update_field', {'entity':app.request.get('entity') , 'field': fieldName, 'id': ligne.id})}}">
+			<span class="bi bi-pencil"></span>
+		</button>
+	{% endif %}
+	<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('dashboard_get_entity', {'entity': app.request.get('entity'), 'id': ligne.id,'field': fieldName })}}">
+		<i class="bi bi-search"></i>
+	</button>
+</td>

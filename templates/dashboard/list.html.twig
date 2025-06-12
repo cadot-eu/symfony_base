@@ -1,0 +1,98 @@
+<div class="d-flex justify-content-end mb-2">
+	{% include '/dashboard/partial/crud_actions_bar.html.twig' %}
+	{% include '/dashboard/partial/parent_button.html.twig' %}
+
+</div>
+
+{% if objets is not empty %}
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				{# Champs simples (hors associations) #}
+				{% for field,datas in objets.fields %}
+					{% if (cruds|length  and field in cruds|keys ) or cruds|length == 0%}
+						<th {% if datas.crud.tooltip is defined and datas.crud.tooltip %} data-bs-toggle="tooltip" data-bs-title="{{datas.crud.tooltip}}" {% endif %}>
+							{% if datas.crud.label is defined and datas.crud.label%}
+								{{ datas.crud.label }}
+							{% else %}
+								{{ field }}
+							{% endif %}
+						</th>
+					{% endif %}
+
+				{% endfor %}
+				{# Associations #}
+				{% for nom,datas in assocs %}
+					{% if ((cruds|length  and nom in cruds|keys ) or cruds|length == 0) and (app.request.get('parent'))|lower!=nom|lower %}
+						<th class="text-primary" {% if datas.crud.tooltip is defined and datas.crud.tooltip %} data-bs-toggle="tooltip" data-bs-title="{{datas.crud.tooltip}}" {% endif %}>
+							{% if datas.crud.label is defined and datas.crud.label%}
+								{{ datas.crud.label }}
+							{% else %}
+								{{ nom }}
+							{% endif %}
+
+						</th>
+					{% endif %}
+				{% endfor %}
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody {% if objets.Ordre is defined and objets.Ordre.propriete is defined %} data-controller="tablereorder" data-tablereorder-entity-value="{{ app.request.get('entity') }}" data-tablereorder-order-value="ordre" {% endif %}>
+			{% if objets.Ordre is defined and objets.Ordre.propriete is defined %}
+				{% set objets_ordre = objets.repo|sort((a, b) => a.ordre <=> b.ordre) %}
+			{% else %}
+				{% set objets_ordre = objets.repo %}
+			{% endif %}
+			{% for ligne in objets_ordre %}
+				<tr
+					data-id="{{ ligne.id }}" id="ligne_{{ ligne.id }}">
+					{# Pour les champs simples (hors associations) #}
+					{% for fieldName,field in objets.fields %}
+						{% if (cruds|length  and fieldName in cruds|keys ) or cruds|length == 0%}
+							{% if fieldName=='id' %}
+								{{ include('/dashboard/partial/id.html.twig', {'objets': objets,'ligne': ligne}) }}
+							{% else %}
+								{% set type = field.type %}
+								{% if type=='datetime' %}
+									{% set type = 'date' %}
+								{% endif %}
+								{% if type=='float' %}
+									{% set type = 'integer' %}
+								{% endif %}
+								{% if 'File' in field.attributs|keys  %}
+									{{ include('/dashboard/partial/file.html.twig', {'ligne': ligne,'field': field,'fieldName': fieldName}) }}
+								{% else %}
+
+									{{ include('/dashboard/partial/' ~ type ~ '.html.twig', {'ligne': ligne,'field': field,'fieldName': fieldName}) }}
+								{% endif %}
+							{% endif %}
+						{% endif %}
+					{% endfor %}
+					{# pour les associations #}
+					{% for fieldName,datas in assocs %}
+						{% if ((cruds|length  and fieldName in cruds|keys ) or cruds|length == 0 ) and (app.request.get('parent'))|lower!=fieldName|lower%}
+							{{ include('/dashboard/partial/' ~ datas.type ~ '.html.twig', {'fieldName': fieldName, 'field': datas, 'ligne': ligne,'ParentId': ligne.id,'source': datas.source,'target': datas.target}) }}
+						{% endif %}
+					{% endfor %}
+					{# les actions en bout de ligne  #}
+					<td>
+						<a href="{{ path('dashboard_delete_entity', {'entity': app.request.get('entity'), 'id': ligne.id })}}" data-turbo-method="delete" data-turbo-confirm="Voulez vous vraiment supprimer cet enregistrement ?" class="btn btn-danger btn-sm">
+							<i class="bi bi-trash"></i>
+						</a>
+						{% if objets.Actions is defined %}
+							{% for label,bouton in objets.Actions %}
+								<a href="{{ bouton.url|interpolate }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ label }}" {{bouton.target is defined ? 'target="' ~ bouton.target ~ '"' : ''}}>
+									{% if bouton.icon is defined and bouton.icon != '' %}
+										<i class="{{ bouton.icon }}"></i>
+									{% else %}
+										{{ label }}
+									{% endif %}
+								</a>
+							{% endfor %}
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endif %}

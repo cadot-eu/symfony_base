@@ -1,0 +1,9 @@
+{% if 'Edition' in field.crud|keys %}
+	<td contenteditable="true" data-controller="editable" {% if field.attributs.Regex is defined %} data-editable-regex-value="{{ field.attributs.Regex.pattern|e('html_attr') }}" data-editable-regex-message-value="{{ field.attributs.Regex.message|e('html_attr') }}" {% endif %} data-editable-type-value="string" data-editable-url-value="{{ path('dashboard_update_field', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id}) }}">
+		{{ attribute(ligne, fieldName)|raw }}
+	</td>
+{% else %}
+	<td>
+		{{attribute(ligne, fieldName)|raw}}
+	</td>
+{% endif %}

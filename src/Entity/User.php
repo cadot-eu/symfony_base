@@ -7,6 +7,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints\Regex;
+
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -41,6 +43,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $note = null;
+
+    #[ORM\Column(length: 20, nullable: true)]
+    #[Regex(
+        pattern: '^[0-9\s]{11,17}$',
+        message: 'SIRET invalide'
+    )]
+
+    private ?string $siret = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $adresse = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Regex(
+        pattern: '^\+?\d{1,4}([.\s]?\d{2,3}){3,5}$',
+        message: 'Numéro de téléphone invalide'
+    )]
+    private ?string $telephone = null;
 
 
     public function getId(): ?int
@@ -129,11 +149,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
-    public function fieldsCrud(): array
-    {
-        //on donne le nom de l'attribut que l'on veut voir dans dashboard et on peut ajouter * à la fin pour une modification possible
-        return ['nom*', 'prenom*', 'note*'];
-    }
+
 
     public function getPrenom(): ?string
     {
@@ -157,5 +173,61 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->note = $note;
 
         return $this;
+    }
+
+    public function getSiret(): ?string
+    {
+        return $this->siret;
+    }
+
+    public function setSiret(?string $siret): static
+    {
+        $this->siret = $siret;
+
+        return $this;
+    }
+
+    public function getAdresse(): ?string
+    {
+        return $this->adresse;
+    }
+
+    public function setAdresse(?string $adresse): static
+    {
+        $this->adresse = $adresse;
+
+        return $this;
+    }
+
+    public function getTelephone(): ?string
+    {
+        return $this->telephone;
+    }
+
+    public function setTelephone(?string $telephone): static
+    {
+        $this->telephone = $telephone;
+
+        return $this;
+    }
+    public function cruds()
+    {
+        return [
+            //
+            // et pour les propriétés:
+            //   ,
+            'ActionsTableauEntite' => [],
+            'id' => [
+                'InfoIdCrud' => ['roles' => $this->getRoles()],
+                'Actions' =>
+                []
+            ],
+            'nom' => ['Edition' => true, 'tooltip' => null, 'label' => null],
+            'prenom' => ['Edition' => true, 'tooltip' => null, 'label' => null],
+            'note' => ['Edition' => true, 'tooltip' => null, 'label' => null],
+            'siret' => ['Edition' => true, 'tooltip' => null, 'label' => null],
+            'adresse' => ['Edition' => true, 'tooltip' => null, 'label' => null],
+            'telephone' => ['Edition' => true, 'tooltip' => null, 'label' => null],
+        ];
     }
 }

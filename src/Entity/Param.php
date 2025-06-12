@@ -48,8 +48,27 @@ class Param
 
         return $this;
     }
-    public function fieldsCrud(): array
+
+    public function cruds()
     {
-        return ['nom*', 'value*'];
-    }
-}
+        return [
+        //'Ordre' => ['propriete' => 'ordre'],
+        // 'ActionsTableauEntite' => [
+             //   'slug' => [
+             //       'url' => 'http://google.com', //'http://google.com/{{entity}}/{{ligne.id}}' possible
+             //       'target' => '_blank',
+             //       'icon' => 'bi bi-globe2',
+             //       'texte' => 'Voir le site',
+             //       'turbo' => false
+             //   ]
+            //],
+        'id' => [
+            //'InfoIdCrud' => [
+            //'devis' => ->getLieu(),
+            //],
+            'Actions' => [] // comme ActionTableauEntite
+            ] ,
+        'nom' => ['Edition' => true, 'tooltip' => null, 'label' => null],
+        'value' => ['Edition' => true, 'tooltip' => null, 'label' => null]
+    ];
+    }}

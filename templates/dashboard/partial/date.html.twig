@@ -1,0 +1,16 @@
+{% if field.type=='datetime' %}
+	{% set format='Y-m-d\\TH:i'  %}
+	{% set type='datetime-local' %}
+{% else %}
+	{% set format='Y-m-d' %}
+	{% set type='date' %}
+{% endif %}
+{% if 'Edition' in field.crud|keys %}
+	<td data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id})}}">
+		<input type="{{type}}" value="{{attribute(ligne, fieldName) is null?null:attribute(ligne, fieldName)|date(format)}}">
+	</td>
+{% else %}
+	<td>
+		{{attribute(ligne, fieldName)|date(format)}}
+	</td>
+{% endif %}
