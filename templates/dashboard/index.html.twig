@@ -5,30 +5,27 @@
 
 {% block body %}
 	<div class="container-fluid mt-2">
-		<div
-			class="row">
-			<!-- Sidebar -->
+		<div class="row">
 
-			<nav class="navbar navbar-expand-md navbar-light bg-light mb-4">
+			<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
 				<div class="container-fluid">
 					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 						<span class="navbar-toggler-icon"></span>
 					</button>
-
 					<div class="collapse navbar-collapse" id="navbarSupportedContent">
-						<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+						<ul class="navbar-nav me-auto mb-2 mb-lg-0 flex-nowrap">
 							<li class="nav-item">
-								<a class="nav-link {% if app.request.get('_route') == 'admin_index' %}active{% endif %}" target="_blank" href="/">Site</a>
+								<a class="nav-link text-nowrap {% if app.request.get('_route') == 'admin_index' %}active{% endif %}" target="_blank" href="/">Site</a>
 							</li>
 							<li class="nav-item">
-								<a class="nav-link {% if app.request.get('_route') == 'superadmin_index' %}active{% endif %}" target="superadmin" href="{{ path('superadmin_index') }}">SuperAdmin</a>
+								<a class="nav-link text-nowrap {% if app.request.get('_route') == 'superadmin_index' %}active{% endif %}" target="superadmin" href="{{ path('superadmin_index') }}">SuperAdmin</a>
 							</li>
 							<li class="nav-item">
-								<a class="nav-link {% if app.request.get('_route') == 'dashboard_index' %}active{% endif %}" href="{{ path('dashboard_index') }}">Tableau de bord</a>
+								<a class="nav-link text-nowrap {% if app.request.get('_route') == 'dashboard_index' %}active{% endif %}" href="{{ path('dashboard_index') }}">Tableau de bord</a>
 							</li>
 							{% for entite in entities|sort %}
 								<li class="nav-item">
-									<a class="nav-link {% if entite == (entity|default) %}active{% endif %}" href="{{ path('dashboard_list_entities', { entity: entite }) }}">{{ entite }}</a>
+									<a class="nav-link text-nowrap {% if entite == (entity|default) %}active{% endif %}" href="{{ path('dashboard_list_entities', { entity: entite }) }}">{{ entite }}</a>
 								</li>
 							{% endfor %}
 						</ul>
@@ -36,19 +33,17 @@
 				</div>
 			</nav>
 
-			<!-- Content -->
-			<main class="container-fluid">
-				<h2>
-					{{ entity is defined?	'Les données: ' ~entity :'Tableau de bord'}}</h2>
 
+			<!-- Contenu principal -->
+			<main class="col-12 ">
+				<h2>{{ entity is defined ? 'Les données: ' ~ entity : 'Tableau de bord' }}</h2>
 				{% if entity is defined %}
 					<turbo-frame id="entity_list">
-						{{include('/dashboard/list.html.twig')}}
+						{{ include('/dashboard/list.html.twig') }}
 					</turbo-frame>
-
 				{% endif %}
 			</main>
-			<div class="mt-5" id="preview"></div>
+
 		</div>
 	</div>
 {% endblock %}

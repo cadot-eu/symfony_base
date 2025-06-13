@@ -1,0 +1,7 @@
+<div class="input-group flex-grow-1">
+	<input type="text" id="Recherche" class="form-control" placeholder="Rechercher dans les tris" value="{{ app.request.get('mot') }}" data-controller="addrecherche" data-action="change->addrecherche#click">
+
+	<button class="btn btn-outline-secondary" type="button" aria-label="Clear search" data-controller="addrecherche" data-action="click->addrecherche#click" data-reset="true">
+		<i class="bi bi-x-circle"></i>
+	</button>
+</div>

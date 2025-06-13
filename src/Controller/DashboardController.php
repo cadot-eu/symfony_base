@@ -107,16 +107,69 @@ class DashboardController extends AbstractController
     }
 
 
-    #[Route('/entities/{entity}/{parent}/{parentid}', name: 'list_entities_parent', methods: ['GET', 'POST'])]
+    #[Route('/entities/{entity}/{parent}/{parentid}', name: 'list_entities_parent')]
     #[Route('/entities/{entity}', name: 'list_entities')]
-    public function listEntity(string $entity, EntityManagerInterface $em, string $parent = null, string $parentid = null): Response
+    public function listEntity(string $entity, EntityManagerInterface $em, string $parent = null, string $parentid = null, Request $request): Response
     {
         $class = 'App\\Entity\\' . ucfirst($entity);
         if (!class_exists($class)) {
             throw $this->createNotFoundException("Entité introuvable");
         }
         $repo = $em->getRepository($class);
-        $objects['repo'] = $repo->findAll();
+
+        $tri = $request->query->get('tri');
+        $ordre = $request->query->get('ordre');
+        $tri = $request->query->get('tri');
+        $ordre = $request->query->get('ordre', 'asc'); // asc par défaut
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $repo = $em->getRepository($class);
+        $qb = $repo->createQueryBuilder('e');
+        if ($tri = $request->query->get('tri')) {
+            if ($mot = $request->query->get('mot')) {
+                $qb->andWhere($qb->expr()->like("e.$tri", ":mot"))
+                    ->setParameter('mot', '%' . $mot . '%');
+            }
+        }
+
+        if ($tri && $ordre) {
+            // Récupérer le type du champ trié
+            $metadata = $em->getClassMetadata($class);
+            $type = $metadata->getTypeOfField($tri) ?? 'string';
+            if (!in_array($tri, $metadata->getAssociationNames())) {
+                if (in_array($type, ['integer', 'smallint', 'bigint', 'decimal', 'float'])) {
+                    // Pour les champs numériques : tri en mettant NULL à la fin
+                    $qb->addOrderBy("CASE WHEN e.$tri IS NULL THEN 1 ELSE 0 END", 'ASC');
+                } else {
+                    // Pour les champs strings ou autres : tri en mettant NULL ou '' à la fin
+                    $qb->addOrderBy("CASE WHEN e.$tri IS NULL OR e.$tri = '' THEN 1 ELSE 0 END", 'ASC');
+                }
+                $qb->addOrderBy("e.$tri", $ordre);
+            }
+            //pour les associations
+            else {
+                $qb->leftJoin("e.$tri", 'r') // jointure vers la relation
+                    ->addSelect('COUNT(r.id) AS HIDDEN nbRelated')
+                    ->groupBy('e.id')
+                    ->orderBy('nbRelated', $ordre);
+            }
+        } else {
+            // Tri par défaut sur l'id décroissant
+            $qb->orderBy('e.id', 'ASC');
+        }
+        // $total = (int) $qb->getQuery()->getSingleScalarResult()->count();
+        $total = \sizeof($qb->getQuery()->getResult());
+
+        $qb->setFirstResult($offset)
+            ->setMaxResults($limit);
+
+
+        $objects['repo'] = $qb->getQuery()->getResult();
+
+
+
 
         // On suppose au moins 1 objet pour récupérer la structure
         $sample = $objects['repo'][0] ?? new $class();
@@ -197,7 +250,6 @@ class DashboardController extends AbstractController
         $objects['ActionsTableauEntite'] = isset($cruds['ActionsTableauEntite']) ? $cruds['ActionsTableauEntite'] : null;
         $objects['Ordre'] = isset($cruds['Ordre']) ? $cruds['Ordre'] : null;
         $objects['Actions'] = isset($cruds['id']) &&  isset($cruds['id']['Actions']) ? $cruds['id']['Actions'] : null;
-
         return $this->render('/dashboard/index.html.twig', [
             'objets' => $objects,
             'assocs' => $assocObjets,
@@ -205,6 +257,8 @@ class DashboardController extends AbstractController
             'entity' => $entity,
             'entities' => $this->getEntitiesName(),
             'parentsOfEntity' => null, // donné par request ou par assocs
+            'currentPage' => $page,
+            'totalPages' => ceil($total / $limit),
         ]);
     }
 
@@ -304,7 +358,10 @@ class DashboardController extends AbstractController
         }
         $em->persist($entityN);
         $em->flush();
-        return $this->redirectToRoute('dashboard_list_entities_parent', ['entity' => $entity, 'parentid' => $entityParentId, 'parent' => $entityParent]);
+        if ($entityParent)
+            return $this->redirectToRoute('dashboard_list_entities_parent', ['entity' => $entity, 'parentid' => $entityParentId, 'parent' => $entityParent]);
+        else
+            return $this->redirectToRoute('dashboard_list_entities', ['entity' => $entity]);
     }
     #[Route('/get/{entity}/{id}/{field}', name: 'get_entity', methods: ['GET'])]
     public function getDatasOfObjet(string $entity, string $id, string $field, GetRenderService $getRender): Response

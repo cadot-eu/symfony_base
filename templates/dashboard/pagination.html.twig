@@ -1,0 +1,58 @@
+{% if totalPages > 1 %}
+	<nav>
+		<ul
+			class="pagination justify-content-center">
+			{# ← Précédent #}
+			<li class="page-item {% if currentPage == 1 %}disabled{% endif %}">
+				<a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'page': currentPage - 1, 'entity': entity})) }}">«</a>
+			</li>
+
+			{# Boucle intelligente sur les pages #}
+			{% set displayPages = [] %}
+
+			{% if totalPages <= 15 %}
+				{# Affiche toutes les pages #}
+				{% for i in 1..totalPages %}
+					{% set displayPages = displayPages|merge([i]) %}
+				{% endfor %}
+			{% else %}
+				{# Affiche début, fin et "tranche" autour de la page courante #}
+				{% set displayPages = displayPages|merge([1, 2]) %}
+				{% set rangeStart = max(3, currentPage - 2) %}
+				{% set rangeEnd = min(totalPages - 2, currentPage + 2) %}
+
+				{% if rangeStart > 3 %}
+					{% set displayPages = displayPages|merge(['...']) %}
+				{% endif %}
+
+				{% for i in rangeStart..rangeEnd %}
+					{% set displayPages = displayPages|merge([i]) %}
+				{% endfor %}
+
+				{% if rangeEnd < totalPages - 2 %}
+					{% set displayPages = displayPages|merge(['...']) %}
+				{% endif %}
+
+				{% set displayPages = displayPages|merge([totalPages - 1, totalPages]) %}
+			{% endif %}
+
+			{# Affichage final #}
+			{% for i in displayPages %}
+				{% if i == '...' %}
+					<li class="page-item disabled">
+						<span class="page-link">…</span>
+					</li>
+				{% else %}
+					<li class="page-item {% if i == currentPage %}active{% endif %}">
+						<a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'page': i, 'entity': entity})) }}">{{ i }}</a>
+					</li>
+				{% endif %}
+			{% endfor %}
+
+			{# → Suivant #}
+			<li class="page-item {% if currentPage == totalPages %}disabled{% endif %}">
+				<a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'page': currentPage + 1, 'entity': entity})) }}">»</a>
+			</li>
+		</ul>
+	</nav>
+{% endif %}

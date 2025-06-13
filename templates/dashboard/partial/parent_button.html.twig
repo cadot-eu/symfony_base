@@ -1,4 +1,4 @@
-<div class="ps-1">
+<div class="d-flex gap-2 flex-shrink-0">
 	{% if app.request.get('parent')  is not null   %}
 		<a class="btn btn-primary ms-4" href="{{ path('dashboard_create_child_entity', {'entity': entity, 'entityParent': app.request.get('parent'), 'entityParentId': app.request.get('parentid')}) }}" data-turbo="false">
 			Ajouter un enfant
@@ -7,6 +7,7 @@
 			{{app.request.get('parent') ~ '-' ~ app.request.get('parentid')}}
 		</a>
 	{% else %}
+
 		<a class="btn btn-primary ms-4" href="{{ path('dashboard_create_entity', {'entity': entity}) }}" data-turbo="false">
 			Ajouter un
 			{{ entity|split('\\')|last }}

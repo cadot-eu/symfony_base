@@ -13,7 +13,8 @@
 			</select>
 		{% else %}
 			{% if attribute(ligne, fieldName)|length %}
-				<span {% if attribute(ligne, fieldName).__toString()!=attribute(ligne, fieldName).id %} data-bs-toggle="tooltip" data-bs-title="{{ attribute(ligne, fieldName) }}" {% endif %}>{{ attribute(ligne, fieldName).id }}</span>
+				<span data-bs-toggle="tooltip" {% if attribute(ligne, fieldName).__toString is defined and attribute(ligne, fieldName).__toString()!=attribute(ligne, fieldName).id %} data-bs-title="{{ attribute(ligne, fieldName) }}" {% else %} data-bs-title="{{fieldName~' n°='~ attribute(ligne, fieldName).id }}" {% endif %}>
+					{{ attribute(ligne, fieldName).id }}</span>
 				<a href="{{ path('dashboard_list_entities_parent', {'parent': source, 'parentid': ligne.id, 'entity': target} ) }}" class="btn btn-xs no-button" data-bs-toggle="tooltip" data-bs-title="voir Le {{ target }} de ce {{ source }}" data-turbo="false">
 					<i class="bi bi-arrow-right-circle"></i>
 				</a>

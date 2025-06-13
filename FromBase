@@ -18,6 +18,16 @@ if [ -f ".ignore" ]; then
     done < .ignore
 fi
 
+# on copie d'office les fichiers du répertoire templates/dashboard'
+rm -rf templates/dashboard/*
+cp -r ../base/templates/dashboard/* templates/dashboard
+# on copie d'office les fichiers de assets/controllers'
+rm  assets/controllers/* #pas pas ceus de site
+cp -r ../base/assets/controllers/* assets/controllers
+# on copie le controller DashboardController
+cp ../base/src/Controller/DashboardController.php src/Controller
+
+
 # Fonction pour vérifier si un fichier doit être ignoré
 should_ignore() {
     local file="$1"

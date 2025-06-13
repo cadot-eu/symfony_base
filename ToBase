@@ -4,9 +4,19 @@ if [ ! -d "../base" ]; then
     echo "Le répertoire ../base n'existe pas."
     exit 1
 fi
+# on copie d'office tout ce qui touche au dashboard
+echo "copie d'office de dashboard templates"
+rm -rf ../base/templates/dashboard
+cp -r templates/dashboard ../base/templates/dashboard
+echo "copie le dashboardController"
+cp src/Controller/DashboardController.php ../base/src/Controller/DashboardController.php
+echo "copie des assets/controllers"
+rm -rf ../base/assets/controllers/*
+cp  assets/controllers/* ../base/assets/controllers/. #on ne copie que les fichiers pas le dir site
+mkdir ../base/assets/controllers/site
 
 # Parcourir les fichiers du répertoire ../base
-find ../base -type f -not -path "../base/.git/*" -not -path "../base/vendor/*" -not -path "../base/public/assets/*" -not -path "../base/assets/vendor/*" -not -name "compose.yaml" -not -name "importmap.php" -not -name "Caddyfile" -not -name ".env" -not -name ".env.dev" -not -name ".ignore" -not -name "compose.override.yaml" -not -name "README.md" -not -name "importmap.json" -not -path "../base/assets/styles/*" -not -name ".phpunit.result*" -not -name "composer.lock" | while IFS= read -r file; do
+find ../base -type f -not -path "../base/.git/*" -not -path "../base/vendor/*" -not -path "../base/public/assets/*" -not -path "../base/assets/vendor/*" -not -name "compose.yaml" -not -name "importmap.php" -not -name "Caddyfile" -not -name ".env" -not -name ".env.dev" -not -name ".ignore" -not -name "compose.override.yaml" -not -name "README.md" -not -name "importmap.json" -not -path "../base/assets/styles/*" -not -name ".phpunit.result*" -not -name "composer.lock" -not -name "../base/src/Controller/DashboardController.php" -not -path "../base/templates/dashboard/*" -not -path "../base/assets/controllers/*" | while IFS= read -r file; do
     # Obtenir le chemin relatif
     rel_path=${file#../base/}
     
