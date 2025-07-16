@@ -31,8 +31,16 @@
 					Ajouter une route Symfony à la méthode
 				</label>
 			</div>
+			<div class="form-check mb-3">
+				<input class="form-check-input" type="checkbox" id="add_docblock" name="add_docblock">
+				<label class="form-check-label" for="add_docblock">
+					Ajouter un docblock explicatif à la méthode générée
+				</label>
+			</div>
 			<div class="d-flex align-items-center gap-2 mb-3">
 				<button type="submit" class="btn btn-primary">Générer</button>
+				<button type="button" class="btn btn-warning" id="edit-method-btn">Modifier</button>
+				<select id="method-list" class="form-select" style="width:auto; min-width:200px; display:none;"></select>
 				<span id="route-link"></span>
 			</div>
 		</form>

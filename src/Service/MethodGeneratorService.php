@@ -55,11 +55,15 @@ class MethodGeneratorService
                 $extra = "\nVoici le retour de PHPUnit sur ta précédente proposition, corrige la méthode pour que le test passe :\n" . $phpunitOutput;
             }
             $addRoute = !empty($data['add_route']);
+            $addDocblock = !empty($data['add_docblock']);
             $routeInstruction = $addRoute
                 ? "Ajoute l'attribut #[Route('/nom-de-ta-route', name: 'auto_route')] juste au-dessus de la méthode générée, comme pour une action de contrôleur Symfony 6+."
                 : "";
+            $docblockInstruction = $addDocblock
+                ? "Ajoute un docblock PHP complet et explicatif juste au-dessus de la méthode générée (et de la route si présente), qui décrit ce que fait la méthode, ses paramètres et ce qu'elle retourne."
+                : "";
             $prompt = sprintf(
-                "%s\n%s\n%s\n\n" .
+                "%s\n%s\n%s\n%s\n\n" .
                     "Réponds STRICTEMENT avec deux blocs de code PHP distincts, sans aucun texte autour, dans ce format :\n" .
                     "```php\n// méthode à ajouter dans App\\%s\npublic function %s(%s)\n{\n    // ...\n}\n```\n" .
                     "```php\n// test PHPUnit pour cette méthode\npublic function test%s()\n{\n    \$service = new \\%s();\n    // ...\n}\n```\n" .
@@ -72,6 +76,7 @@ class MethodGeneratorService
                 "Ajoute dans le fichier {$data['file']} une méthode nommée {$data['method']} avec la signature ({$data['params']}). But : {$data['goal']}.",
                 $extra,
                 $routeInstruction,
+                $docblockInstruction,
                 str_replace('/', '\\', $data['file']),
                 $data['method'],
                 $data['params'],
@@ -112,6 +117,8 @@ class MethodGeneratorService
             $fileContent = file_get_contents($targetFile);
             // Supprime toutes les routes #[Route(...)] juste avant la méthode cible
             $fileContent = $this->removeRouteAttributesBeforeMethod($fileContent, $data['method']);
+            // Supprime tous les docblocks juste avant la méthode cible
+            $fileContent = $this->removeDocblockBeforeMethod($fileContent, $data['method']);
             $fileContent = $this->removeMethodFromClass($fileContent, $data['method']);
             $fileContent = preg_replace('/}\s*$/', "\n\n" . $methodCode . "\n}", $fileContent, 1);
 
@@ -285,6 +292,16 @@ class MethodGeneratorService
     {
         // Supprime tous les #[Route(...)] précédant la déclaration de la méthode cible
         $pattern = '/((?:\s*#\[\s*Route\s*\([^\)]*\)\s*\]\s*)+)(\s*(public|protected|private)\s+function\s+' . preg_quote($methodName, '/') . '\s*\()/';
+        return preg_replace($pattern, '$2', $classContent);
+    }
+
+    /**
+     * Supprime le docblock (/** ... *​/) juste avant la méthode $methodName.
+     */
+    private function removeDocblockBeforeMethod(string $classContent, string $methodName): string
+    {
+        // Supprime un éventuel docblock juste avant la déclaration de la méthode cible
+        $pattern = '/((?:\s*\/\*\*.*?\*\/\s*)+)(\s*(public|protected|private)\s+function\s+' . preg_quote($methodName, '/') . '\s*\()/s';
         return preg_replace($pattern, '$2', $classContent);
     }
 

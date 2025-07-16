@@ -51,6 +51,26 @@ class MethodGeneratorController extends AbstractController
         return new JsonResponse(['logs' => $logs]);
     }
 
+    #[Route('/method-generator/methods', name: 'method_generator_methods', methods: ['GET'])]
+    public function methods(Request $request): JsonResponse
+    {
+        $file = $request->query->get('file');
+        if (!$file) {
+            return new JsonResponse(['methods' => []]);
+        }
+        $path = $this->getParameter('kernel.project_dir') . '/src/' . $file;
+        if (!file_exists($path)) {
+            return new JsonResponse(['methods' => []]);
+        }
+        $content = file_get_contents($path);
+        preg_match_all('/function\s+([a-zA-Z0-9_]+)\s*\(/', $content, $matches);
+        $methods = $matches[1] ?? [];
+        // Exclure __construct et méthodes magiques
+        $methods = array_filter($methods, fn($m) => strpos($m, '__') !== 0);
+        sort($methods);
+        return new JsonResponse(['methods' => array_values($methods)]);
+    }
+
     // ----------- Méthodes privées utilitaires -----------
 
     private function listPhpFiles(): array

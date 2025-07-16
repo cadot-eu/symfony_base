@@ -27,19 +27,32 @@ final class TestController extends AbstractController
         return $randomString;
     }
 
-#[Route('/random-string', name: 'auto_route')]
-public function chainelong()
-{
-    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    $randomString = '';
-    for ($i = 0; $i < 234; $i++) {
-        $randomString .= $characters[rand(0, strlen($characters) - 1)];
+    public function dummyMethod()
+    {
+        return true;
     }
-    return $randomString;
-}
 
-public function dummyMethod()
+/**
+ * Génère une chaîne numérique aléatoire de longueur spécifiée.
+ *
+ * Cette méthode crée une chaîne de nombres aléatoires (0 ou 1) de la longueur demandée.
+ * Chaque caractère de la chaîne est généré indépendamment avec une probabilité égale d'être 0 ou 1.
+ *
+ * @param int $longueur La longueur de la chaîne numérique à générer (doit être positive)
+ * @return int La chaîne numérique aléatoire sous forme d'entier
+ */
+#[Route('/random-binary-string/{longueur}', name: 'auto_route')]
+public function chainelong(int $longueur): int
 {
-    return true;
+    if ($longueur <= 0) {
+        return 0;
+    }
+
+    $result = '';
+    for ($i = 0; $i < $longueur; $i++) {
+        $result .= random_int(0, 1);
+    }
+
+    return (int)$result;
 }
 }
