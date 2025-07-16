@@ -38,6 +38,10 @@ class MethodGenerateCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $data = json_decode(base64_decode($input->getArgument('payload')), true);
+
+        // Supprime l'affichage ici, il est déjà fait dans MethodGeneratorService
+        // $output->writeln('Début du process...');
+
         $result = $this->generatorService->generate($data, function ($msg) use ($output) {
             $output->writeln($msg);
         });

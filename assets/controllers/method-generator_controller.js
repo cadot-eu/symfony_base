@@ -88,7 +88,15 @@ export default class extends Controller {
                         .then(data => {
                             const logsElem = document.getElementById('logs');
                             if (data.logs !== lastLogs) {
-                                logsElem.textContent = data.logs;
+                                // Affichage plus lisible : retour à la ligne pour chaque ligne PHPUnit, sauf pour le poll
+                                let logs = data.logs
+                                    // Récupère uniquement les lignes importantes de PHPUnit
+                                    .replace(/(PHPUnit [^\n]*|Testing [^\n]*|Time: [^\n]*|Memory: [^\n]*|OK \([^\n]*\)|FAILURES!|ERRORS!|WARNINGS!|Tests: [^\n]*, Assertions: [^\n]*, (Failures|Errors|Warnings): [^\n]*)/g, '\n$1\n')
+                                    // Nettoie les retours à la ligne multiples
+                                    .replace(/\n{3,}/g, '\n\n')
+                                    // Nettoie les points du poll
+                                    .replace(/\.{5,}/g, match => match.replace(/\./g, ''));
+                                logsElem.textContent = logs.trim();
                                 lastLogs = data.logs;
                                 emptyCount = 0;
                             } else if (!data.logs) {
@@ -98,12 +106,32 @@ export default class extends Controller {
                                     logsElem.textContent += '\n[Process terminé ou introuvable]';
                                 }
                             } else {
-                                logsElem.textContent += '.';
+                                // Affiche les points pour le poll uniquement si pas déjà à la ligne
+                                if (!logsElem.textContent.endsWith('.')) {
+                                    logsElem.textContent += '.';
+                                } else {
+                                    logsElem.textContent += '.';
+                                }
                             }
-                            // Arrêt du polling si "SUCCESS" apparaît n'importe où dans les logs
-                            if ((data.logs || '').includes('SUCCESS')) {
+                            // Arrêt du polling si "SUCCESS" ou "OK (" ou "Résultat PHPUnit : OK" ou "Fin du process." apparaît dans les logs
+                            if (
+                                (data.logs || '').includes('SUCCESS') ||
+                                (data.logs || '').match(/OK\s*\(\d+\s*test/) ||
+                                (data.logs || '').includes('Résultat PHPUnit : OK') ||
+                                (data.logs || '').includes('Fin du process.')
+                            ) {
                                 clearInterval(interval);
                                 this.showRouteLink(data.logs);
+
+                                // Ajout : tente d'afficher le lien vers la route générée si présente dans le code généré
+                                const routeRegex = /#\[Route\(['"]([^'"]+)['"]/;
+                                const match = (data.logs || '').match(routeRegex);
+                                if (match && match[1]) {
+                                    const routePath = match[1];
+                                    const url = routePath.startsWith('/') ? routePath : '/' + routePath;
+                                    const linkHtml = `<a href="${url}" target="_blank" class="btn btn-success">Tester la route générée (${url})</a>`;
+                                    document.getElementById('route-link').innerHTML = linkHtml;
+                                }
                             }
                             // Arrêt du polling si une erreur Ollama apparaît dans les logs
                             if ((data.logs || '').includes('Erreur Ollama :')) {
@@ -182,12 +210,42 @@ export default class extends Controller {
     }
 
     showRouteLink(logs) {
-        // Cherche #[Route('/xxx', name: 'yyy')] dans les logs
+        // Cherche #[Route('/xxx/{param1}/{param2}', ...)] dans les logs
         const routeRegex = /#\[Route\(['"]([^'"]+)['"]/;
         const match = logs.match(routeRegex);
         if (match && match[1]) {
-            const routePath = match[1];
-            // Si le path ne commence pas par /, ajoute-le
+            let routePath = match[1];
+
+            // Ajout : si la méthode a des paramètres, propose un lien avec des valeurs fictives
+            const paramsField = document.getElementById('params');
+            if (paramsField && paramsField.value.trim()) {
+                // Extrait les noms des paramètres (ex: int $id, string $name)
+                const paramNames = paramsField.value
+                    .split(',')
+                    .map(s => s.trim().replace(/.*\$/, ''))
+                    .filter(Boolean);
+                paramNames.forEach(param => {
+                    // Si le paramètre n'est pas déjà dans la route, on l'ajoute à la fin
+                    if (!routePath.includes('{' + param + '}')) {
+                        if (!routePath.endsWith('/')) routePath += '/';
+                        routePath += '{' + param + '}';
+                    }
+                });
+                // Remplace les {param} par des valeurs fictives pour le lien
+                let url = routePath.replace(/\{([^}]+)\}/g, (m, p) => {
+                    if (/id/i.test(p)) return '1';
+                    if (/name|nom/i.test(p)) return 'test';
+                    if (/lang/i.test(p)) return 'fr';
+                    if (/nb|nombre|count/i.test(p)) return '5';
+                    return 'val';
+                });
+                if (!url.startsWith('/')) url = '/' + url;
+                const linkHtml = `<a href="${url}" target="_blank" class="btn btn-success">Tester la route générée (${url})</a>`;
+                document.getElementById('route-link').innerHTML = linkHtml;
+                return;
+            }
+
+            // Cas sans paramètre
             const url = routePath.startsWith('/') ? routePath : '/' + routePath;
             const linkHtml = `<a href="${url}" target="_blank" class="btn btn-success">Tester la route générée (${url})</a>`;
             document.getElementById('route-link').innerHTML = linkHtml;

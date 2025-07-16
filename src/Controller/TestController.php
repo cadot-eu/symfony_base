@@ -8,51 +8,78 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class TestController extends AbstractController
 {
-    #[Route('/test', name: 'app_test')]
-    public function index(): Response
+
+    public function DetecteurChiens(string $caracteristique): \Symfony\Component\HttpFoundation\JsonResponse
     {
-        return $this->render('test/index.html.twig', [
-            'controller_name' => 'TestController',
+        $chiens = [
+            'petit' => ['Chihuahua', 'Teckel', 'Bouledogue français'],
+            'moyen' => ['Beagle', 'Cocker Spaniel', 'Border Collie'],
+            'grand' => ['Dogue Allemand', 'Saint-Bernard', 'Lévrier Irlandais'],
+            'noir' => ['Labrador noir', 'Caniche noir', 'Schnauzer noir'],
+            'blanc' => ['Samoyède', 'Spitz Allemand', 'Bichon Maltais'],
+            'poil_long' => ['Shih Tzu', 'Lhassa Apso', 'Yorkshire Terrier'],
+            'poil_court' => ['Boxer', 'Doberman', 'Dalmatien']
+        ];
+
+        $resultats = $chiens[strtolower($caracteristique)] ?? ['Aucun chien trouvé pour cette caractéristique'];
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse([
+            'caracteristique' => $caracteristique,
+            'races' => $resultats
         ]);
     }
 
-    #[Route('/gros-string', name: 'auto_route')]
-    public function gros(): string
+    /**
+     * Retourne une évaluation de la beauté de Sarah avec une description correspondante
+     * 
+     * Cette méthode génère une réponse JSON contenant :
+     * - Le niveau de beauté fourni en paramètre (1-10)
+     * - Une description correspondante dans la langue demandée (français ou anglais)
+     * Les descriptions sont uniques pour chaque niveau de beauté
+     *
+     * @param int $nombre Niveau de beauté de Sarah (1-10)
+     * @param string $langue Langue des descriptions ('fr' ou 'en')
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    #[Route('/evaluate-sarah/{nombre}/{langue}', name: 'app_evaluate_sarah')]
+    public function sarah(int $nombre, string $langue): \Symfony\Component\HttpFoundation\JsonResponse
     {
-        $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $randomString = '';
-        for ($i = 0; $i < 234; $i++) {
-            $randomString .= $chars[rand(0, strlen($chars) - 1)];
+        if ($nombre < 1 || $nombre > 10) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['error' => 'Le nombre doit être entre 1 et 10'], 400);
         }
-        return $randomString;
-    }
 
-    public function dummyMethod()
-    {
-        return true;
-    }
+        $descriptionsFr = [
+            1 => 'Sarah est... comment dire... très particulière',
+            2 => 'Sarah a un style unique disons',
+            3 => 'Sarah est passable',
+            4 => 'Sarah est plutôt mignonne',
+            5 => 'Sarah est jolie',
+            6 => 'Sarah est très jolie',
+            7 => 'Sarah est belle',
+            8 => 'Sarah est très belle',
+            9 => 'Sarah est magnifique',
+            10 => 'Sarah est absolument sublime'
+        ];
 
-/**
- * Génère une chaîne numérique aléatoire de longueur spécifiée.
- *
- * Cette méthode crée une chaîne de nombres aléatoires (0 ou 1) de la longueur demandée.
- * Chaque caractère de la chaîne est généré indépendamment avec une probabilité égale d'être 0 ou 1.
- *
- * @param int $longueur La longueur de la chaîne numérique à générer (doit être positive)
- * @return int La chaîne numérique aléatoire sous forme d'entier
- */
-#[Route('/random-binary-string/{longueur}', name: 'auto_route')]
-public function chainelong(int $longueur): int
-{
-    if ($longueur <= 0) {
-        return 0;
-    }
+        $descriptionsEn = [
+            1 => 'Sarah is... how to say... very special',
+            2 => 'Sarah has a unique style let\'s say',
+            3 => 'Sarah is passable',
+            4 => 'Sarah is rather cute',
+            5 => 'Sarah is pretty',
+            6 => 'Sarah is very pretty',
+            7 => 'Sarah is beautiful',
+            8 => 'Sarah is very beautiful',
+            9 => 'Sarah is gorgeous',
+            10 => 'Sarah is absolutely stunning'
+        ];
 
-    $result = '';
-    for ($i = 0; $i < $longueur; $i++) {
-        $result .= random_int(0, 1);
-    }
+        $descriptions = strtolower($langue) === 'en' ? $descriptionsEn : $descriptionsFr;
 
-    return (int)$result;
-}
+        return new \Symfony\Component\HttpFoundation\JsonResponse([
+            'score' => $nombre,
+            'description' => $descriptions[$nombre],
+            'language' => strtolower($langue) === 'en' ? 'english' : 'français'
+        ]);
+    }
 }
