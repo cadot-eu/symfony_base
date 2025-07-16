@@ -15,15 +15,15 @@ class TwigGlobalSubscriber implements EventSubscriberInterface
     public function __construct(Environment $twig, ParamRepository $paramRepository)
     {
         $this->twig = $twig;
-        $this->params = $paramRepository->getAll();
+        //$this->params = $paramRepository->getAll();
     }
 
     public function injectGlobalVariables()
     {
-        $this->twig->addGlobal('TBparametres', $this->params);
+        //$this->twig->addGlobal('TBparametres', $this->params);
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             KernelEvents::CONTROLLER => 'injectGlobalVariables',

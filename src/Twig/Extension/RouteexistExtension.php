@@ -2,19 +2,17 @@
 
 namespace App\Twig\Extension;
 
-use App\Twig\Runtime\RepositoryExtensionRuntime;
+use App\Twig\Runtime\RouteexistExtensionRuntime;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 
-class RepositoryExtension extends AbstractExtension
+class RouteexistExtension extends AbstractExtension
 {
-
-
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('repository', [RepositoryExtensionRuntime::class, 'Repository']),
+            new TwigFunction('routeExist', [RouteexistExtensionRuntime::class, 'routeExist']),
         ];
     }
 }

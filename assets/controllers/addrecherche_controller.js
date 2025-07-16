@@ -1,9 +1,9 @@
 import { Controller } from '@hotwired/stimulus';
+import flasher from '@flasher/flasher';
 
 export default class extends Controller {
     click(event) {
         event.preventDefault();
-        console.log(this.element);
 
         const rechercheInput = document.getElementById('Recherche');
         let mot = rechercheInput ? rechercheInput.value : '';
@@ -16,8 +16,12 @@ export default class extends Controller {
             // Sinon on part de l'URL actuelle
             url = new URL(window.location.href);
         }
+        //si on a pas de tri dans l'url on affiche
+        if (url.searchParams.get('tri') === null) {
+            flasher.flash('warning', 'Veuillez choisir un tri avant de faire une recherche');
+            return;
 
-        console.log(this.element.dataset);
+        }
 
         if (this.element.dataset.reset === "true") {
             rechercheInput.value = "";

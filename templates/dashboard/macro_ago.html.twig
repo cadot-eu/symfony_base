@@ -1,0 +1,17 @@
+{% macro ago(date) %}
+	{% set diff = date()|date('U') - date|date('U') %}
+
+	{% if diff < 3600 %}
+
+		{{ (diff / 60)|round(0, 'floor') }}
+		min
+	{% elseif diff < 86400 %}
+
+		{{ (diff / 3600)|round(0, 'floor') }}
+		h
+	{% else %}
+
+		{{ (diff / 86400)|round(0, 'floor') }}
+		j
+	{% endif %}
+{% endmacro %}

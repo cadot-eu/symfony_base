@@ -20,6 +20,12 @@
 		{% endblock %}
 	</head>
 	<body data-controller="theme" data-theme-day-start-value="8" data-theme-night-start-value="20" class="{{ theme|default('theme-day') }}"> {% block body %}{% endblock %}
-		</body>
+		<button type="button" data-action="theme#toggle" class="btn btn-secondary position-fixed bottom-0 start-0 m-3 rounded-circle shadow" style="z-index: 1050;">
+			<i class="bi bi-moon"></i>
+		</button>
+		<button type="button" onclick="location.reload()" class="btn btn-secondary position-fixed bottom-0 end-0 m-3 rounded-circle shadow" style="z-index: 1050;">
+			<i class="bi bi-arrow-clockwise"></i>
+		</button>
+	</body>
 
-	</html>
+</html>

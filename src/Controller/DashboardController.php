@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\DashboardService;
 use App\Service\GetRenderService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -11,22 +12,30 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use ReflectionClass;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\RouterInterface;
 
 #[Route('/dashboard', name: 'dashboard_')]
 class DashboardController extends AbstractController
 {
     private $em;
-    public function __construct(EntityManagerInterface $em)
+    private $dashboardService;
+    public function __construct(EntityManagerInterface $em, DashboardService $dashboardService)
     {
         $this->em = $em;
+        $this->dashboardService = $dashboardService;
     }
 
     #[Route('/', name: 'index')]
-    public function index(EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): Response
+    public function index(EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, RouterInterface $router,): Response
     {
+        //on vérifie si la route du role de l'user _index existe
+        $routeIndex = \strtolower(explode('_', $this->getUser()->getRoles()[0])[1]) . '_index';
+        if ($router->getRouteCollection()->get($routeIndex)) {
+            return $this->redirect($this->generateUrl($routeIndex));
+        }
         return $this->render(
             'dashboard/index.html.twig',
-            ['entities' => $this->getEntitiesName()]
+            ['entities' => $this->dashboardService->getEntitiesName()]
         );
     }
     #[Route('/clone/{entity}/{id}', name: 'clone_entity')]
@@ -61,7 +70,7 @@ class DashboardController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['value'])) {
-            return new JsonResponse(['error' => 'Invalid data:' . $data], 400);
+            return new JsonResponse(['error' => 'Invalid data:' . json_encode($data)], 400);
         }
 
         $entityClass = 'App\\Entity\\' . ucfirst($entity);
@@ -78,6 +87,22 @@ class DashboardController extends AbstractController
                 $classEnfant = $metadata->getAssociationMapping($field)->targetEntity;
                 $setMethod = 'set' . ucfirst($field);
                 $entityR->$setMethod($data['value'] ? $em->getRepository($classEnfant)->find($data['value']) : null);
+            }
+            if ($associationType == 'ManyToManyOwningSideMapping') {
+                $entityClass = 'App\\Entity\\' . ucfirst($entity);
+                $entityR = $em->getRepository($entityClass)->find($id);
+                $classEnfant = $metadata->getAssociationMapping($field)->targetEntity;
+                //on supprime tous les enfants
+                $getMethod = 'get' . (\ucfirst($field));
+                $removeMethod = 'remove' . substr(\ucfirst($field), 0, -1);
+                foreach ($entityR->$getMethod() as $enfant) {
+                    $entityR->$removeMethod($enfant);
+                }
+                $addMethod = 'add' . substr(\ucfirst($field), 0, -1);
+                foreach ($data['value'] as $enfant) {
+                    if (!$enfant) continue;
+                    $entityR->$addMethod($em->getRepository($classEnfant)->find($enfant));
+                }
             }
         } else {
             $fieldMapping = $metadata->getFieldMapping($field);
@@ -116,9 +141,6 @@ class DashboardController extends AbstractController
             throw $this->createNotFoundException("Entité introuvable");
         }
         $repo = $em->getRepository($class);
-
-        $tri = $request->query->get('tri');
-        $ordre = $request->query->get('ordre');
         $tri = $request->query->get('tri');
         $ordre = $request->query->get('ordre', 'asc'); // asc par défaut
         $page = max(1, (int) $request->query->get('page', 1));
@@ -127,13 +149,30 @@ class DashboardController extends AbstractController
 
         $repo = $em->getRepository($class);
         $qb = $repo->createQueryBuilder('e');
+        // Pour inverser la recherche si on a recliqué dessus
         if ($tri = $request->query->get('tri')) {
             if ($mot = $request->query->get('mot')) {
-                $qb->andWhere($qb->expr()->like("e.$tri", ":mot"))
-                    ->setParameter('mot', '%' . $mot . '%');
+                $metadata = $em->getClassMetadata($class);
+                $type = $metadata->getTypeOfField($tri) ?? 'string';
+                if (in_array($type, ['integer', 'smallint', 'bigint', 'decimal', 'float'])) {
+                    $qb->andWhere("e.$tri = :mot")
+                        ->setParameter('mot', $mot);
+                } else if (in_array($type, ['date', 'datetime'])) {
+                    //on vérifie que mot est cohérent avec une date
+                    if (is_numeric($mot)) {
+                        $qb->andWhere("e.$tri = :mot")
+                            ->setParameter('mot', $mot);
+                    }
+                } else {
+
+                    $qb->andWhere("LOWER(e.$tri) LIKE :mot")
+                        ->setParameter('mot', '%' . strtolower($mot) . '%');
+                }
             }
         }
+        $hasGroupBy = false;
 
+        //si on a un tri et ordre    
         if ($tri && $ordre) {
             // Récupérer le type du champ trié
             $metadata = $em->getClassMetadata($class);
@@ -142,28 +181,42 @@ class DashboardController extends AbstractController
                 if (in_array($type, ['integer', 'smallint', 'bigint', 'decimal', 'float'])) {
                     // Pour les champs numériques : tri en mettant NULL à la fin
                     $qb->addOrderBy("CASE WHEN e.$tri IS NULL THEN 1 ELSE 0 END", 'ASC');
-                } else {
+                } else if (in_array($type, ['boolean', 'string'])) {
                     // Pour les champs strings ou autres : tri en mettant NULL ou '' à la fin
                     $qb->addOrderBy("CASE WHEN e.$tri IS NULL OR e.$tri = '' THEN 1 ELSE 0 END", 'ASC');
+                } else if (in_array($type, ['datetime', 'date'])) {
+                    $qb->addOrderBy("CASE WHEN e.$tri IS NULL THEN 1 ELSE 0 END", 'ASC');
                 }
                 $qb->addOrderBy("e.$tri", $ordre);
             }
             //pour les associations
+            // pour les associations
             else {
-                $qb->leftJoin("e.$tri", 'r') // jointure vers la relation
-                    ->addSelect('COUNT(r.id) AS HIDDEN nbRelated')
-                    ->groupBy('e.id')
-                    ->orderBy('nbRelated', $ordre);
+                $associationMapping = $metadata->getAssociationMapping($tri);
+                $targetAlias = 'r';
+                $qb->leftJoin("e.$tri", $targetAlias);
+
+                // Relation "to one" → tri sur un champ de l'entité liée
+                if (in_array($associationMapping['type'], [\Doctrine\ORM\Mapping\ClassMetadata::MANY_TO_ONE, \Doctrine\ORM\Mapping\ClassMetadata::ONE_TO_ONE])) {
+                    $qb->addOrderBy("$targetAlias.id", $ordre); // ou autre champ pertinent
+                } else {
+                    $hasGroupBy = true;
+                    // Relation "to many" → COUNT
+                    $qb->addSelect("COUNT($targetAlias.id) AS HIDDEN nbRelated")
+                        ->groupBy('e.id')
+                        ->orderBy('nbRelated', $ordre);
+                }
             }
         } else {
             // Tri par défaut sur l'id décroissant
             $qb->orderBy('e.id', 'ASC');
         }
-        // $total = (int) $qb->getQuery()->getSingleScalarResult()->count();
         $total = \sizeof($qb->getQuery()->getResult());
 
-        $qb->setFirstResult($offset)
-            ->setMaxResults($limit);
+        if ($hasGroupBy) {
+            $qb->setFirstResult($offset)
+                ->setMaxResults($limit);
+        }
 
 
         $objects['repo'] = $qb->getQuery()->getResult();
@@ -197,7 +250,7 @@ class DashboardController extends AbstractController
                 'values' => $em->getRepository($metas->targetEntity)->findAll(),
                 'crud' => method_exists($sample, 'cruds') &&  isset($sample->cruds()[$assoc]) ? $sample->cruds()[$assoc] : null,
                 'source' => substr($metas->sourceEntity, strlen('App\\Entity\\')),
-                'target' => substr($metas->targetEntity, strlen('App\\Entity\\'))
+                'target' => substr($metas->targetEntity, strlen('App\\Entity\\')),
             ];
         }
         //on ajoute les attributs
@@ -255,7 +308,7 @@ class DashboardController extends AbstractController
             'assocs' => $assocObjets,
             'cruds' => $cruds,
             'entity' => $entity,
-            'entities' => $this->getEntitiesName(),
+            'entities' => $this->dashboardService->getEntitiesName(),
             'parentsOfEntity' => null, // donné par request ou par assocs
             'currentPage' => $page,
             'totalPages' => ceil($total / $limit),
@@ -383,18 +436,7 @@ class DashboardController extends AbstractController
         return new JsonResponse(\explode(',', $_ENV['APP_ENV']));
     }
 
-    private function getEntitiesName()
-    {
-        //on récupères les noms des entitées
-        $entityClasses = [];
-        $metaData = $this->em->getMetadataFactory()->getAllMetadata();
-        foreach ($metaData as $meta) {
-            $entityClasses[] = $meta->getName();
-        }
-        return array_map(function ($className) {
-            return (new ReflectionClass($className))->getShortName();
-        }, $entityClasses);
-    }
+
     //upload file par le controller stimulus uploadFile
     #[Route('/uploadFile', name: 'upload_file', methods: ['POST'])]
     public function uploadFile(Request $request): JsonResponse

@@ -1,5 +1,5 @@
 <td>
-	{% if 'Edition' in field.crud %}
+	{% if 'Edition' in field.crud|keys and field.crud.Edition==true %}
 		{% set selected = '' %}
 		{% for ev in attribute(ligne, fieldName) %}
 			{% set selected = selected ~ ev.value~',' %}
@@ -15,7 +15,7 @@
 			<div class="enumselect" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id})}}">
 				{% for case,valeur in field.enumValues %}
 					<div class="form-check">
-						<input class="form-check-input" type="checkbox" name="{{case}}" value="{{valeur}}" id="checkbox-{{case}}" {% if attribute(ligne, fieldName) and case in selected %} checked {% endif %}>
+						<input class="form-check-input" type="checkbox" data-name="{{case}}" value="{{valeur}}" id="checkbox-{{case}}" {% if attribute(ligne, fieldName) and case in selected %} checked {% endif %}>
 						<label class="form-check-label" for="checkbox-{{case}}">
 							{{valeur}}
 						</label>
@@ -25,7 +25,7 @@
 		{% else %}
 			<select {% if field.attributs.Column.type is defined and field.attributs.Column.type == "simple_array" %} multiple="true" {% endif %} data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id})}}">
 				{% for case,valeur in field.enumValues %}
-					<option name="{{case}}" value="{{valeur}}" {% if attribute(ligne, fieldName) and valeur in selected %} selected {% endif %}>{{valeur}}</option>
+					<option name="select[]" data-name="{{case}}" value="{{valeur}}" {% if attribute(ligne, fieldName) and valeur in selected %} selected {% endif %}>{{valeur}}</option>
 				{% endfor %}
 			</select>
 		{% endif %}

@@ -7,7 +7,6 @@ import Quote from '@editorjs/quote';
 import Warning from '@editorjs/warning';
 import Image from '@editorjs/image';
 import Code from '@editorjs/code';
-import LinkTool from '@editorjs/link';
 import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import AttachesTool from '@editorjs/attaches';
@@ -42,7 +41,7 @@ export default class extends Controller {
         const modalElement = document.createElement('div');
         modalElement.classList.add('modal', 'fade');
         modalElement.innerHTML = `
-            <div class="modal-dialog modal-fullscreen">
+            <div class="modal-dialog modal-fullscreen" data-turbo="false">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Éditeur</h5>
@@ -177,9 +176,6 @@ export default class extends Controller {
                 shortcut: 'CTRL+SHIFT+M',
             },
             strikethrough: Strikethrough,
-            linkTool: {
-                class: LinkTool,
-            },
             video: {
                 class: Video,
                 config: {

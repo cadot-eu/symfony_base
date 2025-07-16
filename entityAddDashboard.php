@@ -153,14 +153,18 @@ class CrudGenerator
             //]",
             "'id' => [
             //'InfoIdCrud' => [
-            //'devis' => $this->devis->getLieu(),
+            //'devis' => \$this->devis->getLieu(),
             //],
             'Actions' => [] // comme ActionTableauEntite
             ] "
         ];
-
+        $crud[] = "
+// Possible d'ajouter  'Edition' => true  'tooltip' => null, 'label' => null 
+//      'affichage' => 
+//            'join_tooltip' pour csv dans un tooltip
+//            'checkbox' 'join' 'tooltip'";
         foreach ($properties as $property) {
-            $crud[] = "'$property' => ['Edition' => true, 'tooltip' => null, 'label' => null]";
+            $crud[] = "'$property' => []";
         }
 
         $crudString = "[\n        " . implode(",\n        ", $crud) . "\n    ]";
@@ -277,9 +281,6 @@ class CrudGenerator
      */
     public function processEntity($entity)
     {
-        echo "\nEntité sélectionnée : " . $entity['name'] . "\n";
-        echo "Fichier : " . $entity['file'] . "\n";
-
         // Lire le contenu du fichier
         $content = file_get_contents($entity['file']);
 
@@ -299,20 +300,7 @@ class CrudGenerator
         }
 
         // Extraire les propriétés avec ReflectionClass
-        echo "\nAnalyse des propriétés avec ReflectionClass...\n";
         $properties = $this->extractPropertiesWithReflection($entity);
-
-        if (empty($properties)) {
-            echo "\n⚠️  Aucune propriété détectée automatiquement.\n";
-            if ($this->askConfirmation("Voulez-vous saisir manuellement les propriétés ?")) {
-                $properties = $this->manualPropertyInput();
-            } else {
-                echo "Impossible de continuer sans propriétés.\n";
-                return;
-            }
-        } else {
-            echo "\nPropriétés détectées : " . implode(', ', $properties) . "\n";
-        }
 
         // Générer la nouvelle méthode CRUD
         $crudMethod = $this->generateCrudStructure($entity['name'], $properties);
@@ -325,11 +313,6 @@ class CrudGenerator
         // Sauvegarder le fichier
         if (file_put_contents($entity['file'], $newContent)) {
             echo "\n✅ Méthode CRUD générée avec succès dans " . $entity['file'] . "\n";
-
-            // Afficher un aperçu de la méthode générée
-            echo "\n--- Aperçu de la méthode générée ---\n";
-            echo $crudMethod . "\n";
-            echo "--- Fin de l'aperçu ---\n";
         } else {
             echo "\n❌ Erreur lors de la sauvegarde du fichier.\n";
         }

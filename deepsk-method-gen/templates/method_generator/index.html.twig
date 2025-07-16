@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>deepseek AI Method Generator</title>
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css">
+	 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+		 <script src="https://cdn.jsdelivr.net/npm/@hotwired/stimulus/dist/stimulus.umd.js"></script>
+		 <script src="app.js" defer></script>
+	</head>
+	<body>
+		<div class="container mt-5">
+			<h1>deepseek AI Method Generator</h1>
+			<form id="methodForm" data-controller="method">
+				<div class="mb-3">
+					<label for="fileSelect" class="form-label">Select File</label>
+					<select
+						id="fileSelect" class="form-select" data-method-target="file"><!-- Options will be populated dynamically -->
+					</select>
+				</div>
+				<div class="mb-3">
+					<label for="methodName" class="form-label">Method Name</label>
+					<input type="text" id="methodName" class="form-control" data-method-target="name" required>
+				</div>
+				<div class="mb-3">
+					<label for="params" class="form-label">Parameters (Type:Name, e.g., int:count)</label>
+					<input type="text" id="params" class="form-control" data-method-target="params" required>
+				</div>
+				<div class="mb-3">
+					<label for="returnType" class="form-label">Return Type</label>
+					<input type="text" id="returnType" class="form-control" data-method-target="returnType" required>
+				</div>
+				<button type="submit" class="btn btn-primary">Generate Method</button>
+			</form>
+			<div
+				class="mt-4" data-method-target="log" style="border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: auto;"><!-- Log messages will appear here -->
+			</div>
+		</div>
+	</body>
+</html>

@@ -5,7 +5,7 @@
 	{% set format='Y-m-d' %}
 	{% set type='date' %}
 {% endif %}
-{% if 'Edition' in field.crud|keys %}
+{% if 'Edition' in field.crud|keys and field.crud.Edition==true %}
 	<td data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id})}}">
 		<input type="{{type}}" value="{{attribute(ligne, fieldName) is null?null:attribute(ligne, fieldName)|date(format)}}">
 	</td>

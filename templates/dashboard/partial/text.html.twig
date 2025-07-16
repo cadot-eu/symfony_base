@@ -1,10 +1,18 @@
 <td>
-	{% if 'Edition' in field.crud|keys %}
+
+	{% if 'Edition' in field.crud|keys and field.crud.Edition==true %}
 		<button type="button" class="btn btn-sm btn-secondary" data-controller="texteditable" data-texteditable-content-value="{{attribute(ligne, fieldName)}}" data-texteditable-url-value="{{ path('dashboard_update_field', {'entity':app.request.get('entity') , 'field': fieldName, 'id': ligne.id})}}">
 			<span class="bi bi-pencil"></span>
 		</button>
 	{% endif %}
-	<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('dashboard_get_entity', {'entity': app.request.get('entity'), 'id': ligne.id,'field': fieldName })}}">
-		<i class="bi bi-search"></i>
-	</button>
+	{% set texte = attribute(ligne, fieldName)|render|raw %}
+	{% if (field.crud.affichage is defined and field.crud.affichage=='tooltip') %}
+		<span data-bs-toggle="tooltip" data-bs-title="{{attribute(ligne, fieldName)|raw}}">
+			{{ texte is not empty ?'<i class="bi bi-info-circle"></i>':'<i class="bi bi-no-entry"></i>'}}
+		</span>
+	{% else %}
+		<button class="btn btn-xs no-button" data-controller="editorjsrendu" data-editorjsrendu-url-value="{{ path('dashboard_get_entity', {'entity': app.request.get('entity'), 'id': ligne.id,'field': fieldName })}}">
+			{{ texte is not empty ?'<i class="bi bi-search"></i>':'<i class="bi bi-no-entry"></i>'}}
+		</button>
+	{% endif %}
 </td>

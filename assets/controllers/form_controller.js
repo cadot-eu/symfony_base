@@ -10,7 +10,8 @@ export default class extends Controller {
         confirmation: { type: Boolean, default: false },
         value: { type: String, default: '' },
         method: { type: String, default: 'POST' },
-        parent: { type: String, default: '' }
+        parent: { type: String, default: '' },
+
     };
 
     connect() {
@@ -37,18 +38,21 @@ export default class extends Controller {
         }
         let response = await fetch(this.urlValue, {
             method: this.methodValue,
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
             body: JSON.stringify({ value: this.element.innerText })
         });
+        const result = await response.json();
 
-        let result = await response.json();
         if (!result.success) {
-            flasher.error('Erreur lors de l\'envoi du formulaire');
-        } else {
-            flasher.success('Formulaire envoyé');
-            if (this.parentValue && this.methodValue === 'DELETE' && document.querySelector(this.parentValue)) {
-                document.querySelector(this.parentValue).remove();
-            }
+            flasher.error('Erreur lors de l\'envoi du formulaire (' + result.message + ')');
+            return;
         }
+
+        // Si méthode DELETE et parent défini, supprime le parent
+        if (this.parentValue && this.methodValue === 'DELETE' && document.querySelector(this.parentValue)) {
+            document.querySelector(this.parentValue).remove();
+        }
+
+
     }
 }

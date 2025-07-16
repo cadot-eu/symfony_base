@@ -1,7 +1,14 @@
+x-common-opts: &common-opts
+  volumes:
+  - /etc/localtime:/etc/localtime:ro
+  environment:
+  - TZ=Europe/Paris
+
 services:
-  DIRECTORY:
-    image: symfonymick-dev_gd-imagick-pdo_pgsql
-    container_name: DIRECTORY
+  air:
+    <<: *common-opts
+    image: symfonymick-dev_gd-imagick-pdo_pgsql-sockets-snappy-yaml_python
+    container_name: air
     volumes:
       - .:/app
       - ./var/log/nginx:/var/log/nginx
@@ -9,27 +16,37 @@ services:
       - ./var/log/supervisor:/var/log/supervisor
     restart: always
     ports:
-      - NUMPORT:80
-###> doctrine/doctrine-bundle ###
-  DIRECTORY-db:
-    container_name: DIRECTORY-db
+      - 8507:80
+    environment:
+      - OLLAMA_URL=http://ollama:11434/api/generate
+      - OLLAMA_URL_PING=http://ollama:11434/
+    # Si Ollama est lancé avec :
+    #   OLLAMA_HOST=0.0.0.0 ollama serve
+    # alors il est accessible sur toutes les interfaces et l'IP locale (192.168.1.2)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - 11434:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+  air-db:
+    <<: *common-opts
+    container_name: air-db
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: dbDIRECTORY
+      POSTGRES_DB: dbair
       POSTGRES_PASSWORD: pass
-      POSTGRES_USER: DIRECTORY
+      POSTGRES_USER: air
     healthcheck:
-      test: ["CMD", "pg_isready", "-d", "dbDIRECTORY", "-U", "DIRECTORY"]
+      test: ["CMD", "pg_isready", "-d", "dbair", "-U", "air"]
       timeout: 5s
       retries: 5
       start_period: 60s
     volumes:
-      - database_data-DIRECTORY:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
+      - database_data-air:/var/lib/postgresql/data:rw
 
 volumes:
-###> doctrine/doctrine-bundle ###
-  database_data-DIRECTORY:
-###< doctrine/doctrine-bundle ###
+  database_data-air:
+  ollama_data:

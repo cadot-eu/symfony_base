@@ -15,7 +15,7 @@
 
 		{% if cruds['ActionsTableauEntite'] is defined %}
 			{% for label,bouton in cruds['ActionsTableauEntite'] %}
-				<a href="{{ bouton.url }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ label }}" {{bouton.target is defined ? 'target="' ~ bouton.target ~ '"' : ''}}>
+				<a href="{{ bouton.url|interpolate }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ bouton.texte is defined ? bouton.texte : label }}" {{ bouton.target is defined ? 'target="' ~ bouton.target ~ '"' : '' }} {{ bouton.turbo is defined and bouton.turbo == false ? 'data-turbo="false"' : '' }}>
 					{% if bouton.icon is defined and bouton.icon != '' %}
 						<i class="{{ bouton.icon }}"></i>
 					{% else %}

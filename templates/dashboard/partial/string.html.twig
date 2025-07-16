@@ -1,9 +1,19 @@
-{% if 'Edition' in field.crud|keys %}
+{% if 'Edition' in field.crud|keys and field.crud.Edition=="true" %}
 	<td contenteditable="true" data-controller="editable" {% if field.attributs.Regex is defined %} data-editable-regex-value="{{ field.attributs.Regex.pattern|e('html_attr') }}" data-editable-regex-message-value="{{ field.attributs.Regex.message|e('html_attr') }}" {% endif %} data-editable-type-value="string" data-editable-url-value="{{ path('dashboard_update_field', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id}) }}">
-		{{ attribute(ligne, fieldName)|raw }}
+		{{ attribute(ligne, fieldName) }}
 	</td>
 {% else %}
 	<td>
-		{{attribute(ligne, fieldName)|raw}}
+		{# affichage tooltip sélectionné dans le cruds #}
+		{% set texte = attribute(ligne, fieldName) %}
+		{% set texteStr = texte is iterable ? texte|join(', ') : texte %}
+		{% if (field.crud.affichage is defined and field.crud.affichage == 'tooltip') %}
+			<span data-bs-toggle="tooltip" data-bs-title="{{ texteStr|e }}">
+				{{ texteStr is not empty ? '<i class="bi bi-info-circle"></i>' : '<i class="bi bi-no-entry"></i>' }}
+			</span>
+		{% else %}
+			{{ texteStr is not empty ? texteStr : '<i>vide</i>' }}
+		{% endif %}
+
 	</td>
 {% endif %}

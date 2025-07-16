@@ -1,4 +1,4 @@
-{% if 'Edition' in field.crud|keys %}
+{% if 'Edition' in field.crud|keys and field.crud.Edition==true %}
 	<td contenteditable="true" data-controller="editable" data-editable-regex-value="^[0-9.]*$" data-editable-regex-message-value="Cette valeur doit être un entier ou un decimal" data-editable-type-value="string" data-editable-url-value="{{ path('dashboard_update_field', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id}) }}">
 		{{ attribute(ligne, fieldName)|raw }}
 	</td>

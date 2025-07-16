@@ -1,4 +1,4 @@
-{% if 'Edition' in field.crud|keys %}
+{% if 'Edition' in field.crud|keys and field.crud.Edition==true %}
 	<td>
 		{% if attribute(ligne,fieldName) %}
 			{% if attribute(ligne,fieldName) and attribute(ligne,fieldName)|split('.')|last in ['jpg', 'jpeg', 'png', 'gif', 'svg'] %}

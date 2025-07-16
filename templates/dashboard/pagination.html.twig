@@ -4,7 +4,7 @@
 			class="pagination justify-content-center">
 			{# ← Précédent #}
 			<li class="page-item {% if currentPage == 1 %}disabled{% endif %}">
-				<a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'page': currentPage - 1, 'entity': entity})) }}">«</a>
+				<a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({'page': currentPage - 1, 'entity': entity})) }}" data-turbo="false">«</a>
 			</li>
 
 			{# Boucle intelligente sur les pages #}
@@ -44,14 +44,14 @@
 					</li>
 				{% else %}
 					<li class="page-item {% if i == currentPage %}active{% endif %}">
-						<a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'page': i, 'entity': entity})) }}">{{ i }}</a>
+						<a class="page-link" href="{{ path(app.request.attributes.get('_route'),app.request.query.all|merge({'page': i, 'entity': entity})) }}" data-turbo="false">{{ i }}</a>
 					</li>
 				{% endif %}
 			{% endfor %}
 
 			{# → Suivant #}
 			<li class="page-item {% if currentPage == totalPages %}disabled{% endif %}">
-				<a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'page': currentPage + 1, 'entity': entity})) }}">»</a>
+				<a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({'page': currentPage + 1, 'entity': entity})) }}" data-turbo="false">»</a>
 			</li>
 		</ul>
 	</nav>

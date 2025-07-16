@@ -1,0 +1,60 @@
+<td>
+	{# en fonction du type d'affichage demandé par cruds #}
+	{% if (cruds[fieldName]['affichage'] is not defined or cruds[fieldName]['affichage'] == 'select') %}
+		<select multiple class="form-select " name="simpleClicks[]" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field_association', {'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id, 'associationType': 'ManyToManyOwningSideMapping'})}}">
+			<option value="">Aucun sélectionné</option>
+			{# selectionné en premier #}
+			{% set total= datas.values %}
+			{% for entite in total %}
+				{% for selectedEntite in attribute(ligne, fieldName) %}
+					{% if entite == selectedEntite %}
+						<option data-name="{{ entite.id }}" value="{{ entite.id }}" selected>
+							{{ entite }}
+						</option>
+						{% set total = total|filter(entite => entite not in attribute(ligne, fieldName)) %}
+					{% endif %}
+				{% endfor %}
+			{% endfor %}
+			{# les non sélectionné #}
+			{% for entite in total %}
+				<option data-name="{{ entite.id }}" value="{{ entite.id }}">
+					{{ entite }}
+				</option>
+			{% endfor %}
+		</select>
+	{% elseif (cruds[fieldName]['affichage'] is not defined or cruds[fieldName]['affichage'] == 'join') %}
+		{{ attribute(ligne, fieldName)|length>0?attribute(ligne, fieldName)|join(', ') }}
+	{% elseif (cruds[fieldName]['affichage'] is not defined or cruds[fieldName]['affichage'] == 'join_tooltip') %}
+		{% if attribute(ligne, fieldName)|length>0 %}
+			<span data-bs-toggle="tooltip" data-bs-title="{{attribute(ligne, fieldName)|join(', ')}}">
+				{{ '<i class="bi bi-info-circle"></i>'}}
+			</span>
+		{% endif %}
+	{% else %}
+		<div
+			class="form-check" data-controller="editable" data-editable-url-value="{{ path('dashboard_update_field_association', { 'entity': app.request.get('entity'), 'field': fieldName, 'id': ligne.id, 'associationType': 'ManyToManyOwningSideMapping' }) }}">
+			{# Sélectionnés en premier #}
+			{% set total = datas.values %}
+			{% for entite in total %}
+				{% for selectedEntite in attribute(ligne, fieldName) %}
+					{% if entite == selectedEntite %}
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" id="entite_{{ entite.id }}" name="simpleClicks[]" data-name="{{ entite.id }}" value="{{ entite.id }}" checked>
+							<label class="form-check-label" for="entite_{{ entite.id }}">!{{ entite }}</label>
+						</div>
+						{% set total = total|filter(entite => entite not in attribute(ligne, fieldName)) %}
+					{% endif %}
+				{% endfor %}
+			{% endfor %}
+
+			{# Non sélectionnés ensuite #}
+			{% for entite in total %}
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" id="entite_{{ entite.id }}" name="simpleClicks[]" value="{{ entite.id }}" data-name="{{ entite.id }}">
+					<label class="form-check-label" for="entite_{{ entite.id }}">{{ entite }}</label>
+				</div>
+			{% endfor %}
+		</div>
+
+	{% endif %}
+</td>

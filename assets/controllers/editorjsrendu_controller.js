@@ -3,55 +3,88 @@ import highlight from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import BigPicture from 'bigpicture';
 import initializeTooltips from '../scripts/tooltip.js';
-
+import { Modal } from 'bootstrap';
 
 export default class extends Controller {
     static values = {
-        url: String,
-        destination: { type: String, default: '#preview' }
+        url: String
     }
 
     connect() {
+        this.abortController = null;
         this.element.addEventListener('click', () => this.rendu());
     }
 
     async rendu() {
-        // On demande au controller les données par get
-        const response = await fetch(this.urlValue);
-        const data = await response.text();
+        if (this.abortController) this.abortController.abort();
+        this.abortController = new AbortController();
 
-        // On parse le HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data, 'text/html');
-        // On applique highlight.js aux blocs de code
-        const codeBlocks = doc.querySelectorAll('editorjs-block-code');
-        codeBlocks.forEach((block) => {
-            block.innerHTML = highlight.highlightAuto(block.innerText).value;
+        try {
+            const response = await fetch(this.urlValue, { signal: this.abortController.signal });
+            const html = await response.text();
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // Highlight.js
+            doc.querySelectorAll('editorjs-block-code').forEach((block) => {
+                block.innerHTML = highlight.highlightAuto(block.innerText).value;
+            });
+
+            // BigPicture
+            doc.querySelectorAll('.editorjs-block-attaches img').forEach((img) => {
+                img.classList.add('bigpicture');
+            });
+
+            // Injecte le contenu dans un modal dynamique
+            this.createModal(doc.body.innerHTML);
+
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Erreur lors du rendu :', error);
+            }
+        }
+    }
+
+    createModal(content) {
+        const modalEl = document.createElement('div');
+        modalEl.className = 'modal fade';
+        modalEl.tabIndex = -1;
+        modalEl.innerHTML = `
+            <div class="modal-dialog" data-turbo="false">
+                <div class="modal-content">
+                    <button type="button" class="btn-close position-absolute m-2 end-0 " style="z-index: 9999"></button>
+                    <div class="modal-body">${content}</div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modalEl);
+
+        const modal = new Modal(modalEl, {
+            backdrop: 'static',
+            keyboard: false
         });
-        // pour les blocs attaches on ajoute une big picture sur le lien
-        const attaches = doc.querySelectorAll('.editorjs-block-attaches');
-        attaches.forEach((attach) => {
-            //on prend l'img et on y met une big picture
-            const img = attach.querySelector('img');
-            if (!img) return;
-            //on ajoute une class bigpicture
-            img.classList.add('bigpicture');
 
+        modal.show();
+
+        // Fermeture via bouton
+        modalEl.querySelector('.btn-close').addEventListener('click', () => modal.hide());
+
+        // Fermeture = cleanup
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            modal.dispose();
+            modalEl.remove();
         });
 
-        // On injecte le HTML MODIFIÉ (et non l'original)
-        document.querySelector(this.destinationValue).innerHTML = doc.documentElement.innerHTML;
-        // On ajoute le bigpicture sur un click
-        document.querySelectorAll('.bigpicture').forEach((img) => {
+        // BigPicture
+        modalEl.querySelectorAll('.bigpicture').forEach((img) => {
             img.addEventListener('click', () => {
-                BigPicture({
-                    el: img,
-                    zoom: true
-                });
-            })
-        })
-        //tootip
-        initializeTooltips();
+                BigPicture({ el: img, zoom: true });
+            });
+        });
 
+        // Tooltips
+        initializeTooltips();
     }
 }

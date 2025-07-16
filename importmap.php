@@ -20,7 +20,6 @@ return [
         'path' => './assets/dashboard.js',
         'entrypoint' => true,
     ],
-
     '@symfony/stimulus-bundle' => [
         'path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js',
     ],
@@ -123,5 +122,29 @@ return [
     'glightbox/dist/css/glightbox.min.css' => [
         'version' => '3.3.1',
         'type' => 'css',
+    ],
+    'sortablejs' => [
+        'version' => '1.15.6',
+    ],
+    'mqtt' => [
+        'version' => '5.13.2',
+    ],
+    'chart.js/auto' => [
+        'version' => '4.5.0',
+    ],
+    '@kurkle/color' => [
+        'version' => '0.3.4',
+    ],
+    '@floating-ui/dom' => [
+        'version' => '1.7.2',
+    ],
+    '@floating-ui/core' => [
+        'version' => '1.7.2',
+    ],
+    '@floating-ui/utils' => [
+        'version' => '0.2.10',
+    ],
+    '@floating-ui/utils/dom' => [
+        'version' => '0.2.10',
     ],
 ];

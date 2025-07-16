@@ -9,6 +9,12 @@ use Twig\TwigFunction;
 
 class EncodeExtension extends AbstractExtension
 {
+    public function getFilters(): array
+    {
+        return [
+            new TwigFilter('encode', [EncodeRuntime::class, 'encode']),
+        ];
+    }
     public function getFunctions(): array
     {
         return [

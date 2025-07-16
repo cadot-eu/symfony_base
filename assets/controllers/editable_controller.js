@@ -12,38 +12,34 @@ export default class extends Controller {
         regexMessage: String,
     };
     connect() {
-        //pour les checkboxs
-        if (this.element.classList.contains('enumselect') || this.element.classList.contains('onecheckselect')) {
+        //pour les checkboxs les select multiple ...
+        if (this.element.querySelectorAll('.form-check-input').length > 0) {
             this.element.querySelectorAll('.form-check-input').forEach(el => {
                 el.addEventListener("change", this.sendUpdate.bind(this));
             });
         }
+        //pour un checkbox simple
         if (this.element.tagName == 'INPUT' && this.element.type == 'checkbox') {
             this.element.addEventListener("change", this.sendUpdate.bind(this));
         }
+        //pour un select
         else if (this.element.tagName == 'SELECT') {
             this.element.addEventListener("change", this.sendUpdate.bind(this));
         }
+        //pour un input date
         else if (this.element.querySelector('input') && (this.element.querySelector('input').type == 'date' || this.element.querySelector('input').type == 'datetime-local')) { //pour les datepicker
             this.element.querySelector('input').addEventListener("input", this.sendUpdate.bind(this));
             this.datePicker = true;
         }
+        // pour les autres
         else {
             //is on a un regex on l'ajoute avec son message
             this.element.addEventListener("blur", this.sendUpdate.bind(this));
-        }
-    }
-
-    disconnect() {
-        if (this.element.tagName === 'SELECT') {
-            this.element.removeEventListener("change", this.sendUpdate);
-        }
-        else if (this.element.querySelector('input')) {
-            this.element.querySelector('input').removeEventListener("input", this.sendUpdate);
-            this.element.querySelector('input').removeEventListener("change", this.sendUpdate);
-        }
-        else {
-            this.element.removeEventListener("blur", this.sendUpdate);
+            this.element.addEventListener('paste', (event) => {
+                event.preventDefault();
+                const text = (event.clipboardData || window.clipboardData).getData('text');
+                document.execCommand('insertText', false, text);
+            });
         }
     }
 
@@ -57,43 +53,39 @@ export default class extends Controller {
                 return;
             }
         }
+        //checkbox simple
         if (this.element.tagName == 'INPUT' && this.element.type == 'checkbox') {
             if (this.associationidValue == '')
                 valeur = this.element.checked;
             else
                 valeur = { 'associationid': this.associationidValue, 'value': this.element.checked };
         }
-        else if (this.element.tagName == 'SELECT') {
-            if (this.element.getAttribute('multiple') == 'true') {
-                let values = [];
-                for (let i = 0; i < this.element.options.length; i++) {
-                    if (this.element.options[i].selected) {
-                        values.push(this.element.options[i].getAttribute('name'));
-                    }
-                }
-                valeur = values;
-            }
-            else {
-                valeur = this.element.options[this.element.selectedIndex].getAttribute('name');
-
-            }
-        }
-        else if (this.element.classList.contains('onecheckselect')) {
-            valeur = this.element.querySelector('input').checked;
-        }
-        else if (this.element.classList.contains('enumselect')) {
+        //checkbox multiple
+        else if (this.element.querySelectorAll('.form-check-input').length > 0) {
             let values = [];
-            this.element.querySelectorAll('input.form-check-input:checked').forEach(input => {
-                values.push(input.getAttribute('name'));
-            });
+            for (let i = 0; i < this.element.querySelectorAll('.form-check-input').length; i++) {
+                if (this.element.querySelectorAll('.form-check-input')[i].checked) {
+                    values.push(this.element.querySelectorAll('.form-check-input')[i].getAttribute('data-name'));
+                }
+            }
             valeur = values;
         }
+        //select multiple
+        else if (this.element.options && this.element.options.length > 0) {
+            let values = [];
+            for (let i = 0; i < this.element.options.length; i++) {
+                if (this.element.options[i].selected) {
+                    values.push(this.element.options[i].getAttribute('data-name'));
+                }
+            }
+            valeur = values;
+        }
+        //datepicker
         else if (this.datePicker) {
             if (this.element.querySelector('input').value) {
                 valeur = valeur = this.element.querySelector('input').value;
             }
         }
-
         let response = await fetch(this.urlValue, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

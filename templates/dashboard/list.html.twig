@@ -13,96 +13,97 @@
 			{% include "/dashboard/pagination.html.twig" %}
 		</div>
 
-		<div class="table-responsive">
-			<table class="table table-striped">
+		<table class="table table-striped table-bordered text-center">
 
 
-				<thead>
-					<tr>
-						{# Champs simples (hors associations) #}
-						{% for field,datas in objets.fields %}
-							{# si il est dans cruds ou cruds est vide #}
-							{% if (cruds|length  and field in cruds|keys ) or cruds|length == 0 %}
-								{{ macros.th(field, datas,objets.Ordre is defined and objets.Ordre is not empty,'text-secondary') }}
-							{% endif %}
+			<thead>
+				<tr>
+					{# Champs simples (hors associations) #}
+					{% for field,datas in objets.fields %}
+						{# si il est dans cruds ou cruds est vide #}
+						{% if (cruds|length  and field in cruds|keys ) or cruds|length == 0 %}
+							{{ macros.th(field, datas,objets.Ordre is defined and objets.Ordre is not empty,'text-secondary') }}
+						{% endif %}
 
-						{% endfor %}
-						{# Associations #}
-						{% for nom,datas in assocs %}
-							{# si il est dans crud et que ce n'est pas le parent #}
-							{% if ((cruds|length  and nom in cruds|keys ) or cruds|length == 0) and (app.request.get('parent'))|lower!=nom|lower %}
-								{{ macros.th(nom, datas,objets.Ordre is defined and objets.Ordre is not empty,'text-primary') }}
-							{% endif %}
-						{% endfor %}
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody
-					{% if objets.Ordre is defined and objets.Ordre.propriete is defined %} data-controller="tablereorder" data-tablereorder-entity-value="{{ app.request.get('entity') }}" data-tablereorder-order-value="ordre" {% endif %}>
+					{% endfor %}
+					{# Associations #}
+					{% for nom,datas in assocs %}
+						{# si il est dans crud et que ce n'est pas le parent #}
+						{% if ((cruds|length  and nom in cruds|keys ) or cruds|length == 0) and (app.request.get('parent'))|lower!=nom|lower %}
+							{{ macros.th(nom, datas,objets.Ordre is defined and objets.Ordre is not empty,'text-primary') }}
+						{% endif %}
+					{% endfor %}
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody
+				{% if objets.Ordre is defined and objets.Ordre.propriete is defined %} data-controller="tablereorder" data-tablereorder-entity-value="{{ app.request.get('entity') }}" data-tablereorder-order-value="ordre" {% endif %}>
 
-					{# on sort les objets #}
-					{% set objets_ordre = objets.repo %}
-					{% if objets.Ordre is defined and  objets.Ordre.propriete is defined %}
-						{% set objets_ordre = objets.repo|sort((a, b) => a.ordre <=> b.ordre) %}
-					{% endif %}
+				{# on sort les objets #}
+				{% set objets_ordre = objets.repo %}
+				{% if objets.Ordre is defined and  objets.Ordre.propriete is defined %}
+					{% set objets_ordre = objets.repo|sort((a, b) => a.ordre <=> b.ordre) %}
+				{% endif %}
 
-					{% for ligne in objets_ordre %}
-						<tr
-							data-id="{{ ligne.id }}" id="ligne_{{ ligne.id }}">
-							{# Pour les champs simples (hors associations) #}
-							{% for fieldName,field in objets.fields %}
-								{% if (cruds|length  and fieldName in cruds|keys ) or cruds|length == 0%}
-									{% if fieldName=='id' %}
-										{{ include('/dashboard/partial/id.html.twig', {'objets': objets,'ligne': ligne}) }}
+				{% for ligne in objets_ordre %}
+					<tr
+						data-id="{{ ligne.id }}" id="ligne_{{ ligne.id }}">
+						{# Pour les champs simples (hors associations) #}
+						{% for fieldName,field in objets.fields %}
+							{% if (cruds|length  and fieldName in cruds|keys ) or cruds|length == 0%}
+								{% if fieldName=='id' %}
+									{{ include('/dashboard/partial/id.html.twig', {'objets': objets,'ligne': ligne}) }}
+								{% else %}
+									{% set type = field.type %}
+									{% if type=='datetime' %}
+										{% set type = 'date' %}
+									{% endif %}
+									{% if type=='float' %}
+										{% set type = 'integer' %}
+									{% endif %}
+									{% if type=='array' %}
+										{% set type = 'json' %}
+									{% endif %}
+									{% if 'File' in field.attributs|keys  %}
+										{{ include('/dashboard/partial/file.html.twig', {'ligne': ligne,'field': field,'fieldName': fieldName}) }}
 									{% else %}
-										{% set type = field.type %}
-										{% if type=='datetime' %}
-											{% set type = 'date' %}
-										{% endif %}
-										{% if type=='float' %}
-											{% set type = 'integer' %}
-										{% endif %}
-										{% if type=='array' %}
-											{% set type = 'json' %}
-										{% endif %}
-										{% if 'File' in field.attributs|keys  %}
-											{{ include('/dashboard/partial/file.html.twig', {'ligne': ligne,'field': field,'fieldName': fieldName}) }}
-										{% else %}
 
-											{{ include('/dashboard/partial/' ~ type ~ '.html.twig', {'ligne': ligne,'field': field,'fieldName': fieldName}) }}
-										{% endif %}
+										{{ include('/dashboard/partial/' ~ type ~ '.html.twig', {'ligne': ligne,'field': field,'fieldName': fieldName}) }}
 									{% endif %}
 								{% endif %}
-							{% endfor %}
-							{# pour les associations #}
-							{% for fieldName,datas in assocs %}
-								{% if ((cruds|length  and fieldName in cruds|keys ) or cruds|length == 0 ) and (app.request.get('parent'))|lower!=fieldName|lower%}
-									{{ include('/dashboard/partial/' ~ datas.type ~ '.html.twig', {'fieldName': fieldName, 'field': datas, 'ligne': ligne,'ParentId': ligne.id,'source': datas.source,'target': datas.target}) }}
+							{% endif %}
+						{% endfor %}
+						{# pour les associations #}
+						{% for fieldName,datas in assocs %}
+							{% if ((cruds|length  and fieldName in cruds|keys ) or cruds|length == 0 ) and (app.request.get('parent'))|lower!=fieldName|lower%}
+								{% set type = datas.type %}
+								{% if type=='ManyToManyInverseSideMapping' %}
+									{% set type = 'ManyToManyOwningSideMapping' %}
 								{% endif %}
-							{% endfor %}
-							{# les actions en bout de ligne  #}
-							<td>
-								<a href="{{ path('dashboard_delete_entity', {'entity': app.request.get('entity'), 'id': ligne.id })}}" data-turbo-method="delete" data-turbo-confirm="Voulez vous vraiment supprimer cet enregistrement ?" class="btn btn-danger btn-sm">
-									<i class="bi bi-trash"></i>
-								</a>
-								{% if objets.Actions is defined %}
-									{% for label,bouton in objets.Actions %}
-										<a href="{{ bouton.url|interpolate }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ label }}" {{bouton.target is defined ? 'target="' ~ bouton.target ~ '"' : ''}}>
-											{% if bouton.icon is defined and bouton.icon != '' %}
-												<i class="{{ bouton.icon }}"></i>
-											{% else %}
-												{{ label }}
-											{% endif %}
-										</a>
-									{% endfor %}
-								{% endif %}
-							</td>
-						</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-		</div>
-
+								{{ include('/dashboard/partial/' ~ type ~ '.html.twig', {'fieldName': fieldName, 'field': datas, 'ligne': ligne,'ParentId': ligne.id,'source': datas.source,'target': datas.target,'cruds': cruds}) }}
+							{% endif %}
+						{% endfor %}
+						{# les actions en bout de ligne  #}
+						<td>
+							<a href="{{ path('dashboard_delete_entity', {'entity': app.request.get('entity'), 'id': ligne.id })}}" data-turbo-method="delete" data-turbo-confirm="Voulez vous vraiment supprimer cet enregistrement ?" class="btn btn-danger btn-sm">
+								<i class="bi bi-trash"></i>
+							</a>
+							{% if objets.Actions is defined %}
+								{% for label,bouton in objets.Actions %}
+									<a href="{{ bouton.url|interpolate }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ bouton.texte is defined ? bouton.texte : label }}" {{ bouton.target is defined ? 'target="' ~ bouton.target ~ '"' : '' }} {{ bouton.turbo is defined and bouton.turbo == false ? 'data-turbo="false"' : '' }}>
+										{% if bouton.icon is defined and bouton.icon != '' %}
+											<i class="{{ bouton.icon }}"></i>
+										{% else %}
+											{{ label }}
+										{% endif %}
+									</a>
+								{% endfor %}
+							{% endif %}
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
 	{% else %}
 		<div class="alert alert-info">Aucun résultat trouvé.</div>
 	{% endif %}

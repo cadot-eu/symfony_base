@@ -1,17 +1,19 @@
 {% macro th(field, datas,ordre,class) %}
 	{% set texte = '' %}
 	{% if datas.crud.label is defined and datas.crud.label %}
-		{% set texte = datas.crud.label %}
+		{% set texte = datas.crud.label%}
 	{% else %}
 		{% set texte = field %}
 	{% endif %}
 
+	{# si on a une demande d'affichage de tooltip dans cruds #}
 	<th
 		{% if datas.crud.tooltip is defined and datas.crud.tooltip %} data-bs-toggle="tooltip" data-bs-title="{{ datas.crud.tooltip }}" {% endif %}>
-		{# lien pour le tri si pas Ordre#}
-		{% if not ordre  and datas.type not in ['ManyToOneAssociationMapping','OneToOneAssociationMapping','text'] %}
+
+		{# lien pour le tri si pas Ordre #}
+		{% if not ordre  and datas.type not in ['text'] %}
 			<a class="{{class}} text-decoration-none cursor-pointer position-relative d-inline-block" href="{{ path( app.request.attributes.get('_route'), app.request.attributes.get('_route_params') | merge( app.request.query.all | merge({ 'tri': field, 'ordre': app.request.get('tri') == field ? (app.request.get('ordre') == 'desc' ? 'asc' : 'desc') : (field == 'id' ? 'desc' : 'asc') }) ) ) }}" data-turbo="false" data-controller="addrecherche" data-action="click->addrecherche#click">
-				{{texte}}
+				{{texte|raw}}
 				{% if app.request.get('tri') == field %}
 					{# Cas normal : tri actif sur ce champ #}
 					<span class="position-absolute top-0 start-100 translate-middle-x small text-muted ms-2">
@@ -29,7 +31,7 @@
 				{% endif %}
 			</a>
 		{% else %}
-			{{texte}}
+			{{texte|raw}}
 		{% endif %}
 	</th>
 {% endmacro %}

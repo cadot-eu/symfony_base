@@ -7,11 +7,11 @@ monolog:
             min_level: debug
             max_level: debug
         debug_only_file:
-            type: stream
+            type: rotating_file
             path: "%kernel.logs_dir%/debug.log"
             level: debug
             max_files: 1
-            channels: ["!deprecation"]
+            channels: [ "!deprecation" ]
 
         # Fichier pour INFO uniquement
         info_only_log:
@@ -20,11 +20,11 @@ monolog:
             min_level: info
             max_level: info
         info_only_file:
-            type: stream
+            type: rotating_file
             path: "%kernel.logs_dir%/info.log"
             level: info
             max_files: 1
-            channels: ["!deprecation"]
+            channels: [ "!deprecation" ]
 
         # Fichier pour NOTICE, WARNING, ERROR, etc.
         other_log:
@@ -32,8 +32,8 @@ monolog:
             handler: other_file
             min_level: notice
         other_file:
-            type: stream
+            type: rotating_file
             path: "%kernel.logs_dir%/other.log"
             level: notice
             max_files: 1
-            channels: ["!deprecation"]
+            channels: [ "!deprecation" ]

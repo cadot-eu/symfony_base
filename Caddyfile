@@ -3,9 +3,9 @@
 	acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
-DIRECTORY.localhost {
+air.localhost {
 	encode gzip zstd
-	reverse_proxy localhost:NUMPORT
+	reverse_proxy localhost:8507
 	header {
 		Cache-Control public, max-age=31536000
 	}

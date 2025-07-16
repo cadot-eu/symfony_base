@@ -13,16 +13,32 @@
 						<span class="navbar-toggler-icon"></span>
 					</button>
 					<div class="collapse navbar-collapse" id="navbarSupportedContent">
-						<ul class="navbar-nav me-auto mb-2 mb-lg-0 flex-nowrap">
-							<li class="nav-item">
-								<a class="nav-link text-nowrap {% if app.request.get('_route') == 'admin_index' %}active{% endif %}" target="_blank" href="/">Site</a>
+						<ul class="navbar-nav me-auto mb-2 mb-lg-0 flex-nowrap" data-turbo="false">
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+									Site
+								</a>
+								<ul class="dropdown-menu">
+									<li>
+										<a class="dropdown-item" target="_blank" href="/">/</a>
+									</li>
+									{% if routeExist( 'admin_index') %}
+										<li>
+											<a class="dropdown-item {% if app.request.get('_route') == 'admin_index' %}active{% endif %}" target="_blank" href="{{ path('admin_index') }}">Admin</a>
+										</li>
+									{% endif %}
+									{% if routeExist( 'superadmin_index')%}
+										<li>
+											<a class="dropdown-item {% if app.request.get('_route') == 'superadmin_index' %}active{% endif %}" target="superadmin" href="{{ path('superadmin_index') }}">SuperAdmin</a>
+										</li>
+									{% endif %}
+								</ul>
 							</li>
-							<li class="nav-item">
-								<a class="nav-link text-nowrap {% if app.request.get('_route') == 'superadmin_index' %}active{% endif %}" target="superadmin" href="{{ path('superadmin_index') }}">SuperAdmin</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link text-nowrap {% if app.request.get('_route') == 'dashboard_index' %}active{% endif %}" href="{{ path('dashboard_index') }}">Tableau de bord</a>
-							</li>
+							{% if routeExist( 'dashboard_index') %}
+								<li class="nav-item">
+									<a class="nav-link text-nowrap {% if app.request.get('_route') == 'dashboard_index' %}active{% endif %}" href="{{ path('dashboard_index') }}">Tableau de bord</a>
+								</li>
+							{% endif %}
 							{% for entite in entities|sort %}
 								<li class="nav-item">
 									<a class="nav-link text-nowrap {% if entite == (entity|default) %}active{% endif %}" href="{{ path('dashboard_list_entities', { entity: entite }) }}">{{ entite }}</a>
@@ -36,11 +52,25 @@
 
 			<!-- Contenu principal -->
 			<main class="col-12 ">
-				<h2>{{ entity is defined ? 'Les données: ' ~ entity : 'Tableau de bord' }}</h2>
+				{% set texte = '' %}
+				{% if entity is defined %}
+					{% if app.request.get('parent')  is not null  and app.request.get('parentid') is not null %}
+						{% set repo = repository(app.request.get('parent'),'findBy', { 'id': app.request.get('parentid') }) %}
+						<h2>{{("Les enfants <i>"~entity~ (entity|slice(0,-1)=='s'?'':'s')~"</i> de l'objet <i>"~ repo[0] ~"</i>("~ app.request.get('parent') ~")")|raw}}</h2>
+					{% else %}
+						<h2>{{ entity is defined ?("Les données <i>"~entity~ (entity|slice(0,-1)=='s'?'s':'')~"</i>")|raw: "Tableau de bord" }}</h2>
+					{% endif %}
+
+				{% endif %}
+
 				{% if entity is defined %}
 					<turbo-frame id="entity_list">
 						{{ include('/dashboard/list.html.twig') }}
 					</turbo-frame>
+				{% else %}
+					<div data-turbo="false">
+						{{contenu|default|raw}}
+					</div>
 				{% endif %}
 			</main>
 

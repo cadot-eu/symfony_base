@@ -1,11 +1,16 @@
 <td>
-	<a href="{{ path('dashboard_create_child_entity', { entityParent: source, entityParentId: ParentId, entity: target }) }}" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un objet <b>{{ target }}</b> descendant du  même <b>{{ source }}</b> " data-turbo="false">
-		<i class="bi bi-plus"></i>
-	</a>
-	{% if (attribute(ligne, fieldName)|length) %}
-		{{ attribute(ligne, fieldName)|length }}
-		<a href="{{ path('dashboard_list_entities_parent', {'parent': source, 'parentid': ligne.id, 'entity': target} ) }}" data-bs-toggle="tooltip" data-bs-title="voir les <b>{{ target~'s' }}</b> de ce <b>{{ source }}</b>" data-turbo="false" class="text-decoration-none">
+	{% if 'Edition' in field.crud|keys and field.crud.Edition==true %}
+		<a href="{{ path('dashboard_create_child_entity', { entityParent: source, entityParentId: ParentId, entity: target }) }}" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-title="Ajouter un objet <b>{{ target }}</b> descendant du  même <b>{{ source }}</b> " data-turbo="false">
+			<i class="bi bi-plus"></i>
+		</a>
+	{% endif %}
+	{% set value = attribute(ligne, fieldName) %}
+	{% set showTooltip = cruds[fieldName]['affichage'] is defined and cruds[fieldName]['affichage'] == 'join_tooltip' %}
+	{% if value|length %}
+		{{ value|length }}
+		<a href="{{ path('dashboard_list_entities_parent', { parent: source, parentid: ligne.id, entity: target }) }}" class="text-decoration-none" data-turbo="false" data-bs-toggle="tooltip" {% if showTooltip %} data-bs-custom-class="w-50" data-bs-title="{{ value|encode({nokey: true})|e('html_attr') }}" {% else %} data-bs-title="voir les <b>{{ target ~ 's' }}</b> de ce <b>{{ source }}</b>" {% endif %}>
 			<i class="bi bi-arrow-right-circle"></i>
 		</a>
 	{% endif %}
+
 </td>

@@ -57,7 +57,11 @@ class ParamRepository extends ServiceEntityRepository
     public function getAll(): array
     {
         $tab = [];
-        foreach ($this->findAll() as $parametre) {
+        $params = $this->findAll(); // <-- C'est ici que Doctrine tente d'accéder à la table "param"
+        if (!$params) {
+            return $tab;
+        }
+        foreach ($params as $parametre) {
             $tab[$parametre->getNom()] = $parametre->getValue();
         }
         return $tab;

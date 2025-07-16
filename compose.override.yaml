@@ -1,14 +1,14 @@
 
 services:
 ###> doctrine/doctrine-bundle ###
-  DIRECTORY-db:
+  air-db:
     ports:
       - "5432"
 ###< doctrine/doctrine-bundle ###
 
 ###> symfony/mailer ###
-  DIRECTORY-mailer:
-    container_name: DIRECTORY-mailer
+  air-mailer:
+    container_name: air-mailer
     image: axllent/mailpit
     ports:
       - "1025"

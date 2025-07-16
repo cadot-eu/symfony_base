@@ -7,6 +7,7 @@
          colors="true"
          bootstrap="tests/bootstrap.php"
          convertDeprecationsToExceptions="false"
+         stopOnFailure="true"
 >
     <php>
         <ini name="display_errors" value="1" />
@@ -34,6 +35,7 @@
     </listeners>
 
     <extensions>
+        <extension class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension" />
         <extension class="Symfony\Component\Panther\ServerExtension" />
     </extensions>
 </phpunit>

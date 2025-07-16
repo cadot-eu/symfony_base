@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deepseek AI Method Generator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@hotwired/stimulus/dist/stimulus.umd.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>deepseek AI Method Generator</h1>
+    <form id="methodForm" data-controller="method">
+        <div class="mb-3">
+            <label for="fileSelect" class="form-label">Select File</label>
+            <select id="fileSelect" class="form-select" required>
+                <option value="">Choose a file...</option>
+                <!-- Populate with files from /app directory -->
+                <option value="example.php">example.php</option>
+                <!-- Add more options dynamically -->
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="methodName" class="form-label">Method Name</label>
+            <input type="text" id="methodName" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="parameters" class="form-label">Parameters (type:name, type:name)</label>
+            <input type="text" id="parameters" class="form-control" placeholder="e.g., int:count, string:name">
+        </div>
+        <div class="mb-3">
+            <label for="returnType" class="form-label">Return Type</label>
+            <input type="text" id="returnType" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate Method</button>
+    </form>
+
+    <div id="log" class="mt-4">
+        <h3>Log</h3>
+        <pre id="logOutput"></pre>
+    </div>
+</div>
+
+<script>
+    // Stimulus Controller
+    const application = Stimulus.Application.start();
+
+    application.register("method", class extends Stimulus.Controller {
+        connect() {
+            console.log("Method controller connected");
+        }
+
+        async submit(event) {
+            event.preventDefault();
+            const file = document.getElementById('fileSelect').value;
+            const methodName = document.getElementById('methodName').value;
+            const parameters = document.getElementById('parameters').value;
+            const returnType = document.getElementById('returnType').value;
+
+            const response = await fetch('/api/generate-method', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ file, methodName, parameters, returnType }),
+            });
+
+            const result = await response.json();
+            this.updateLog(result);
+        }
+
+        updateLog(result) {
+            const logOutput = document.getElementById('logOutput');
+            logOutput.textContent += JSON.stringify(result, null, 2) + '\n';
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,6 +1,13 @@
 /.*.swp
 /*.sql
 /*.zip
+/compose.override.yaml
+/zigbee2mqtt
+/mosquitto/data/mosquitto.db
+/tinytuya/devices.json
+/tinytuya/mappings.json
+/tinytuya/tuya-raw.json
+/tinytuya/snapshot.json
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php

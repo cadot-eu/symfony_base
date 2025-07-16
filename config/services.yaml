@@ -1,21 +1,19 @@
 parameters:
+    deepseek_api_key: '%env(DEEPSEEK_API_KEY)%'
 
 services:
-    # default configuration for services in *this* file
     _defaults:
-        autowire: true # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        autowire: true
+        autoconfigure: true
 
-    App\Service\LogFilenameService: ~ #pour monolog
+    App\Service\LogFilenameService: ~
 
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: "../src/"
         exclude:
-            - "../src/DependencyInjection/"
-            - "../src/Entity/"
-            - "../src/Kernel.php"
+          - "../src/DependencyInjection/"
+          - "../src/Entity/"
+          - "../src/Kernel.php"
 
     App\Service\GetRenderService:
         arguments:
@@ -24,4 +22,13 @@ services:
     app.filter.all_filter:
         class: App\Imagine\Filter\Loader\AllImagineFilter
         tags:
-            - { name: "liip_imagine.filter.loader", loader: "allfilter" }
+          - { name: "liip_imagine.filter.loader", loader: "allfilter" }
+
+    App\Service\DashboardService:
+        arguments:
+            $logger: "@logger"
+            $entityManager: "@doctrine.orm.entity_manager"
+
+    App\Service\DeepseekApiService:
+        arguments:
+            $deepseekApiKey: '%deepseek_api_key%'
