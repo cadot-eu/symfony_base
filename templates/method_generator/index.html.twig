@@ -44,6 +44,10 @@
 				<span id="route-link"></span>
 			</div>
 		</form>
-		<div id="logs" class="mt-4 bg-light p-3" style="min-height:150px; font-family:monospace;"></div>
+		<div id="logs" class="mt-4 bg-light p-3" style="min-height:150px; font-family:monospace;">
+			<turbo-frame
+				id="logs-frame"><!-- Les turbo-streams sont automatiquement ajoutés ici -->
+			</turbo-frame>
+		</div>
 	</div>
 {% endblock %}

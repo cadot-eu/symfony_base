@@ -9,6 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MethodGeneratorController extends AbstractController
 {
@@ -33,8 +34,15 @@ class MethodGeneratorController extends AbstractController
             print_r($data, true)
         );
 
-        $jobId = Uuid::v4();
+        $jobId = \Symfony\Component\Uid\Uuid::v4();
         $logFile = $this->getLogFile($kernel, $jobId);
+
+        // Correction stricte : supprime tous les anciens fichiers de log pour éviter les doublons
+        $logDir = dirname($logFile);
+        foreach (glob($logDir . '/methodgen_*.log') as $oldLog) {
+            @unlink($oldLog);
+        }
+        file_put_contents($logFile, '');
 
         $this->logToFile($logFile, "Lancement du process...\n");
 
@@ -49,6 +57,24 @@ class MethodGeneratorController extends AbstractController
         $logFile = $this->getLogFile($kernel, $jobId);
         $logs = file_exists($logFile) ? file_get_contents($logFile) : '';
         return new JsonResponse(['logs' => $logs]);
+    }
+
+    #[Route('/method-generator/log/{jobId}/stream', name: 'method_generator_log_stream', methods: ['GET'])]
+    public function logStream(string $jobId, KernelInterface $kernel): Response
+    {
+        $logFile = $this->getLogFile($kernel, $jobId);
+        $logs = file_exists($logFile) ? file_get_contents($logFile) : '';
+        // Ajout : flush explicite pour éviter le cache navigateur/proxy
+        return new Response(
+            '<turbo-frame id="logs-frame"><pre style="margin:0; font-family:monospace;white-space:pre-wrap;">' . htmlspecialchars($logs) . '</pre></turbo-frame>',
+            200,
+            [
+                'Content-Type' => 'text/html; charset=utf-8',
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => '0'
+            ]
+        );
     }
 
     #[Route('/method-generator/methods', name: 'method_generator_methods', methods: ['GET'])]

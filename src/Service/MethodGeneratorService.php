@@ -21,9 +21,9 @@ class MethodGeneratorService
     public function generate(array $data, callable $output = null): array
     {
         if ($output) {
-            $output("\nLancement du process...");
-            $output("Début du process...");
-            $output("Envoi à l'IA...");
+            // $output($this->turboStreamLog("Lancement du process..."));
+            // $output($this->turboStreamLog("Début du process..."));
+            $output($this->turboStreamLog("Préparation du prompt et interrogation IA..."));
         }
 
         foreach (['file', 'method', 'params', 'goal'] as $requiredKey) {
@@ -42,18 +42,37 @@ class MethodGeneratorService
         $success = false;
         $startTime = microtime(true);
 
+        // Correction : on sort de la boucle ET de la méthode dès le succès, sans exécuter la suite du code
         while ($iteration < $maxTries) {
+            if ($success) {
+                // Sortie immédiate de la méthode pour éviter toute suite ou double log
+                return [
+                    'success' => true,
+                    'iterations' => $iteration,
+                    'duration' => $this->formatDuration(microtime(true) - $startTime)
+                ];
+            }
             $iteration++;
+            if ($output) {
+                $output($this->turboStreamLog("Itération $iteration / $maxTries"));
+            }
             $extra = $iteration > 1 ? "\nVoici le retour de PHPUnit sur ta précédente proposition, corrige la méthode pour que le test passe :\n" : '';
             $prompt = $this->promptBuilder->buildPrompt($data, $extra);
 
+            if ($output) {
+                $output($this->turboStreamLog("Envoi du prompt à l'IA..."));
+            }
+
             $apiResponse = $this->deepseekApiService->generateMethod(['prompt' => $prompt]);
             $content = $apiResponse['choices'][0]['message']['content'] ?? '';
+            if ($output) {
+                $output($this->turboStreamLog("Réponse IA reçue."));
+            }
             $blocks = $this->phpClassEditor->extractPhpCodeBlocks($content);
 
             if (empty($blocks) || empty($blocks[0])) {
                 if ($output) {
-                    $output('Fin du process.');
+                    $output($this->turboStreamLog('Fin du process.'));
                 }
                 return [
                     'success' => false,
@@ -70,15 +89,15 @@ class MethodGeneratorService
             $fileContent = $this->phpClassEditor->removeDocblockBeforeMethod($fileContent, $data['method']);
             $fileContent = $this->phpClassEditor->removeMethodFromClass($fileContent, $data['method']);
             if ($output) {
-                $output("Méthode supprimée (si existait) dans {$data['file']}.");
+                $output($this->turboStreamLog("Méthode supprimée (si existait) dans {$data['file']}."));
             }
             $fileContent = preg_replace('/}\s*$/', "\n\n" . $methodCode . "\n}", $fileContent, 1);
             $fileContent = preg_replace("/\n{3,}/", "\n\n", $fileContent);
             file_put_contents($targetFile, $fileContent);
             if ($output) {
-                $output("Méthode créée dans {$data['file']}.");
+                $output($this->turboStreamLog("Méthode créée dans {$data['file']}."));
                 if (!empty($data['add_docblock'])) {
-                    $output("Ajout du docblock à la méthode.");
+                    $output($this->turboStreamLog("Ajout du docblock à la méthode."));
                 }
             }
 
@@ -94,7 +113,6 @@ class MethodGeneratorService
             }
             $namespace = rtrim($namespace, '\\');
             $testSkeleton = "<?php\n\nnamespace $namespace;\n\nuse PHPUnit\\Framework\\TestCase;\n\n/**\n * @group excluded\n */\nclass $testClass extends TestCase\n{\n";
-            // Ajout du test généré si présent
             if (!empty($blocks[1])) {
                 $testMethod = trim($blocks[1]);
                 $testMethod = preg_replace('/^<\?php\s*/', '', $testMethod);
@@ -108,16 +126,19 @@ class MethodGeneratorService
                 }
                 file_put_contents($testFile, $testSkeleton);
                 if ($output) {
-                    $output("Fichier $testFile créé pour le test.");
+                    $output($this->turboStreamLog("Fichier $testFile créé pour le test."));
                 }
             } else {
                 file_put_contents($testFile, $testSkeleton);
                 if ($output) {
-                    $output("Fichier $testFile mis à jour pour le test.");
+                    $output($this->turboStreamLog("Fichier $testFile mis à jour pour le test."));
                 }
             }
 
             // --- Lancer PHPUnit sur le fichier de test généré ---
+            if ($output) {
+                $output($this->turboStreamLog("Lancement de PHPUnit sur $testFile..."));
+            }
             $phpunitBin = $this->getProjectDir() . '/vendor/bin/phpunit';
             if (!file_exists($phpunitBin)) {
                 $phpunitBin = 'phpunit'; // fallback global
@@ -132,33 +153,38 @@ class MethodGeneratorService
             $process->setTimeout(30);
             $process->run();
 
-            if ($output) {
-                // Affichage succinct du retour PHPUnit
-                $phpunitOutput = $process->getOutput() . $process->getErrorOutput();
-                $lines = preg_split('/\r\n|\r|\n/', $phpunitOutput);
-                foreach ($lines as $line) {
-                    if (
-                        preg_match('/^OK\b|^FAILURES!|^ERRORS!|^WARNINGS!|^Tests:|^Time:|^Memory:|^\d+ \/\s*\d+/', $line)
-                        || strpos($line, 'PHPUnit') === 0
-                        || strpos($line, 'Testing') === 0
-                        || strpos($line, 'Résultat PHPUnit') !== false
-                    ) {
-                        $output("phpunit: " . $line);
-                    }
+            $phpunitOutput = $process->getOutput() . $process->getErrorOutput();
+            $phpunitSummary = '';
+            foreach (preg_split('/\r\n|\r|\n/', $phpunitOutput) as $line) {
+                if (preg_match('/^(OK \([^)]+\)|FAILURES!|ERRORS!|WARNINGS!)/', $line)) {
+                    $phpunitSummary = $line;
+                    break;
                 }
             }
-
-            $phpunitOutput = $process->getOutput() . $process->getErrorOutput();
-            $phpunitLines = preg_split('/\r\n|\r|\n/', trim($phpunitOutput));
-            $phpunitSummary = end($phpunitLines);
-
-            if ($output) {
-                $output("Résultat PHPUnit : " . $phpunitSummary);
+            if (!$phpunitSummary) {
+                $phpunitLines = preg_split('/\r\n|\r|\n/', trim($phpunitOutput));
+                $phpunitSummary = end($phpunitLines);
             }
 
-            if ($process->isSuccessful() && strpos($phpunitOutput, 'FAILURES') === false && strpos($phpunitOutput, 'ERRORS') === false) {
-                $success = true;
-                break;
+            if ($output) {
+                $output($this->turboStreamLog("Résultat PHPUnit : " . $phpunitSummary));
+            }
+
+            if ($process->isSuccessful() && strpos($phpunitSummary, 'FAILURES') === false && strpos($phpunitSummary, 'ERRORS') === false) {
+                if ($output) {
+                    $output($this->turboStreamLog("Test réussi à l'itération $iteration."));
+                    $output($this->turboStreamLog("Fin du process. Nombre d'itérations : $iteration. Durée : " . $this->formatDuration(microtime(true) - $startTime)));
+                }
+                // Sortie immédiate de la méthode après succès
+                return [
+                    'success' => true,
+                    'iterations' => $iteration,
+                    'duration' => $this->formatDuration(microtime(true) - $startTime)
+                ];
+            } else {
+                if ($output) {
+                    $output($this->turboStreamLog("Test échoué à l'itération $iteration."));
+                }
             }
         }
 
@@ -166,7 +192,7 @@ class MethodGeneratorService
         $elapsedStr = $this->formatDuration($elapsed);
 
         if ($output) {
-            $output('Fin du process.');
+            $output($this->turboStreamLog("Fin du process. Nombre d'itérations : $iteration. Durée : $elapsedStr"));
         }
 
         if ($success) {
@@ -174,6 +200,17 @@ class MethodGeneratorService
         } else {
             return ['success' => false, 'duration' => $elapsedStr];
         }
+    }
+
+    private function turboStreamLog(string $msg): string
+    {
+        return <<<HTML
+<turbo-stream action="append" target="logs-frame">
+  <template>
+    <div style="white-space:pre-wrap;font-family:monospace;">$msg</div>
+  </template>
+</turbo-stream>
+HTML;
     }
 
     private function getProjectDir(): string
