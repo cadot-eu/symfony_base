@@ -42,14 +42,8 @@ class MethodGeneratorService
         $phpunitOutput = '';
         $success = false;
 
-        $model = $data['model'] ?? 'deepseek';
+        $model = 'deepseek';
         $output('Modèle IA utilisé  : ' . $model . PHP_EOL);
-
-        $ollamaModels = [
-            'stablelm-zephyr:latest',
-            'phi3:3.8b',
-            'llama3.2:3b',
-        ];
 
         $startTime = microtime(true);
 
@@ -85,77 +79,10 @@ class MethodGeneratorService
                 $classFqcn
             );
 
-            // Appel IA selon le modèle choisi
-            if ($model === 'deepseek') {
-                $apiResponse = $this->deepseekApiService->generateMethod(['prompt' => $prompt]);
-                $content = $apiResponse['choices'][0]['message']['content'] ?? '';
-            } elseif (in_array($model, $ollamaModels, true)) {
-                // Appel Ollama
-                $ollamaUrl = 'http://host.docker.internal:11434/api/generate';
-                $output("Appel Ollama sur l'URL : $ollamaUrl" . PHP_EOL);
+            // Appel Deepseek uniquement
+            $apiResponse = $this->deepseekApiService->generateMethod(['prompt' => $prompt]);
+            $content = $apiResponse['choices'][0]['message']['content'] ?? '';
 
-                // Vérifie l'accessibilité de l'URL Ollama
-                $ollamaPingUrl = 'http://host.docker.internal:11434/';
-                $curlPing = curl_init($ollamaPingUrl);
-                curl_setopt($curlPing, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($curlPing, CURLOPT_TIMEOUT, 3);
-                $pingResult = curl_exec($curlPing);
-                $pingHttpCode = curl_getinfo($curlPing, CURLINFO_HTTP_CODE);
-                curl_close($curlPing);
-
-                if ($pingResult === false || $pingHttpCode < 200 || $pingHttpCode >= 400) {
-                    $output("ERREUR : Ollama n'est pas accessible sur $ollamaPingUrl (HTTP $pingHttpCode)" . PHP_EOL);
-                    return [
-                        'success' => false,
-                        'error' => "Ollama n'est pas accessible sur $ollamaPingUrl (HTTP $pingHttpCode)"
-                    ];
-                }
-
-                $ollamaPayload = [
-                    'model' => $model,
-                    'prompt' => $prompt,
-                    'stream' => false,
-                ];
-                $output("Payload envoyé à Ollama : " . json_encode($ollamaPayload) . PHP_EOL);
-
-                $ch = curl_init($ollamaUrl);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($ollamaPayload));
-                // Ajoute pour récupérer le code HTTP
-                curl_setopt($ch, CURLOPT_HEADER, true);
-                $ollamaResponse = curl_exec($ch);
-                $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                $headers = substr($ollamaResponse, 0, $header_size);
-                $body = substr($ollamaResponse, $header_size);
-                curl_close($ch);
-
-                $output("HTTP Ollama code : $http_code" . PHP_EOL);
-                $output("HTTP Ollama headers : " . $headers . PHP_EOL);
-                $output("HTTP Ollama body : " . $body . PHP_EOL);
-
-                if ($http_code !== 200 || empty($body)) {
-                    $errorMsg = "Ollama a répondu HTTP $http_code ou body vide.";
-                    // Tente d'extraire l'erreur JSON si présente
-                    $ollamaData = json_decode($body, true);
-                    if (isset($ollamaData['error'])) {
-                        $errorMsg .= " Erreur Ollama : " . $ollamaData['error'];
-                    }
-                    $output("ERREUR : $errorMsg" . PHP_EOL);
-                    return [
-                        'success' => false,
-                        'error' => $errorMsg
-                    ];
-                }
-                $ollamaData = json_decode($body, true);
-                $content = $ollamaData['response'] ?? '';
-                $output("Réponse brute Ollama : " . var_export($content, true) . PHP_EOL);
-            } else {
-                $output("ERREUR : Modèle IA inconnu ou non supporté : $model" . PHP_EOL);
-                return ['success' => false, 'error' => "Modèle IA inconnu ou non supporté : $model"];
-            }
             $blocks = $this->extractPhpCodeBlocks($content);
 
             // Vérification : réponse IA vide ou mal formatée

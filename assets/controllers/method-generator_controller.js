@@ -18,7 +18,6 @@ export default class extends Controller {
             method: form.method.value,
             params: form.params.value,
             goal: form.goal.value,
-            model: form.querySelector('[name="model"]').value,
             add_route: form.add_route && form.add_route.checked ? true : false,
         };
         document.getElementById('route-link').innerHTML = ''; // Efface le lien à chaque génération

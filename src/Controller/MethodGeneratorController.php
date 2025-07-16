@@ -17,12 +17,8 @@ class MethodGeneratorController extends AbstractController
     {
         $files = $this->listPhpFiles();
 
-        // Récupération dynamique des modèles Ollama disponibles
-        $ollamaModels = $this->fetchOllamaModels();
-
         return $this->render('method_generator/index.html.twig', [
             'files' => $files,
-            'models' => $ollamaModels,
         ]);
     }
 
@@ -136,45 +132,5 @@ class MethodGeneratorController extends AbstractController
         $testFile = preg_replace('/\.php$/', 'Test.php', $sourceFile);
         // Préfixer par tests/
         return 'tests/' . $testFile;
-    }
-
-    /**
-     * Récupère dynamiquement la liste des modèles Ollama disponibles via l'API.
-     * @return string[]
-     */
-    private function fetchOllamaModels(): array
-    {
-        $ollamaUrl = $_ENV['OLLAMA_URL_PING'] ?? 'http://ollama:11434/';
-        // On retire le /api/generate ou /api/chat pour obtenir la racine
-        $ollamaUrl = preg_replace('#/api/.*$#', '/', $ollamaUrl);
-        $tagsUrl = rtrim($ollamaUrl, '/') . '/api/tags';
-
-        $models = [];
-        try {
-            $ch = curl_init($tagsUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($httpCode === 200 && $response) {
-                $data = json_decode($response, true);
-                if (isset($data['models']) && is_array($data['models'])) {
-                    foreach ($data['models'] as $model) {
-                        if (isset($model['name'])) {
-                            $models[] = $model['name'];
-                        }
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            // fallback silencieux
-        }
-        // Ajoute deepseek si besoin (optionnel)
-        if (!in_array('deepseek', $models, true)) {
-            array_unshift($models, 'deepseek');
-        }
-        return $models;
     }
 }

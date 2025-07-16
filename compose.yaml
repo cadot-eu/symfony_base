@@ -17,20 +17,6 @@ services:
     restart: always
     ports:
       - 8507:80
-    environment:
-      - OLLAMA_URL=http://ollama:11434/api/generate
-      - OLLAMA_URL_PING=http://ollama:11434/
-    # Si Ollama est lancé avec :
-    #   OLLAMA_HOST=0.0.0.0 ollama serve
-    # alors il est accessible sur toutes les interfaces et l'IP locale (192.168.1.2)
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    ports:
-      - 11434:11434
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: unless-stopped
   air-db:
     <<: *common-opts
     container_name: air-db
@@ -49,4 +35,3 @@ services:
 
 volumes:
   database_data-air:
-  ollama_data:
