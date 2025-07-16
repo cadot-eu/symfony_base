@@ -21,14 +21,21 @@ class MethodGeneratorService
     public function generate(array $data, callable $output = null): array
     {
         if ($output) {
-            // $output($this->turboStreamLog("Lancement du process..."));
-            // $output($this->turboStreamLog("Début du process..."));
             $output($this->turboStreamLog("Préparation du prompt et interrogation IA..."));
         }
 
         foreach (['file', 'method', 'params', 'goal'] as $requiredKey) {
             if (!array_key_exists($requiredKey, $data)) {
                 throw new \InvalidArgumentException("Missing required key '$requiredKey' in data array.");
+            }
+        }
+
+        // Ajout : gestion des fichiers annexes pour le prompt
+        $extraFilesPrompt = '';
+        if (!empty($data['extra_files']) && is_array($data['extra_files'])) {
+            $extraFilesPrompt .= "\n\nPrends en compte les fichiers suivants pour ta proposition :\n";
+            foreach ($data['extra_files'] as $file) {
+                $extraFilesPrompt .= "Nom du fichier : {$file['name']}\nContenu :\n{$file['content']}\n---\n";
             }
         }
 
@@ -42,10 +49,8 @@ class MethodGeneratorService
         $success = false;
         $startTime = microtime(true);
 
-        // Correction : on sort de la boucle ET de la méthode dès le succès, sans exécuter la suite du code
         while ($iteration < $maxTries) {
             if ($success) {
-                // Sortie immédiate de la méthode pour éviter toute suite ou double log
                 return [
                     'success' => true,
                     'iterations' => $iteration,
@@ -56,8 +61,21 @@ class MethodGeneratorService
             if ($output) {
                 $output($this->turboStreamLog("Itération $iteration / $maxTries"));
             }
-            $extra = $iteration > 1 ? "\nVoici le retour de PHPUnit sur ta précédente proposition, corrige la méthode pour que le test passe :\n" : '';
-            $prompt = $this->promptBuilder->buildPrompt($data, $extra);
+            // Ajout : consigne explicite pour corrélation test/méthode en cas d'échec
+            $extra = $iteration > 1
+                ? "\nVoici le retour de PHPUnit sur ta précédente proposition, corrige la méthode OU le test pour que le test passe. Vérifie bien si le problème vient du test ou de la méthode, et assure-toi que la méthode et le test sont bien en corrélation logique et fonctionnelle."
+                : '';
+
+            // Ajoute explicitement la consigne pour la route/docblock si demandé
+            if (!empty($data['add_route'])) {
+                $extra .= "\nAjoute l'attribut #[Route] Symfony au-dessus de la méthode générée si ce n'est pas déjà fait.";
+            }
+            if (!empty($data['add_docblock'])) {
+                $extra .= "\nAjoute un docblock PHP complet et explicatif à la méthode générée.";
+            }
+
+            // Ajoute les fichiers annexes au prompt
+            $prompt = $this->promptBuilder->buildPrompt($data, $extra . $extraFilesPrompt);
 
             if ($output) {
                 $output($this->turboStreamLog("Envoi du prompt à l'IA..."));

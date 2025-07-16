@@ -8,8 +8,18 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class TestController extends AbstractController {
 
-public function toto(): int
+public function toto(): array
 {
-    return random_int(1, 100);
+    $words = [
+        'Papillon', 'Chouquette', 'Chou-fleur', 'Trompe-l’œil', 'Coquelicot',
+        'Pamplemousse', 'Tintamarre', 'Bijou', 'Chouchou', 'Grenouille',
+        'Farfelu', 'Hurluberlu', 'Chicouf', 'Escargot', 'Gribouillis',
+        'Bric-à-brac', 'Boulevard', 'Panache', 'Babillage', 'Dégueulasse',
+        'Bouquiniste', 'Champignon', 'Flâner', 'Gigoter', 'Glouglou',
+        'Grommeler', 'Lutin', 'Gargouillis', 'Moufle', 'Papillote',
+        'Ratatouille', 'Sabotage', 'Saperlipopette'
+    ];
+
+    return ['word' => $words[array_rand($words)]];
 }
 }

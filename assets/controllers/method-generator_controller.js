@@ -18,6 +18,51 @@ export default class extends Controller {
         if (editBtn) {
             editBtn.addEventListener('click', () => this.editSelectedMethod());
         }
+        // Gestion fichiers annexes
+        // Correction : n'ajoute l'event qu'une seule fois, et vide bien extraFiles à chaque affichage
+        this.extraFiles = [];
+        this.extraFilesList = document.getElementById('extra-files-list');
+        this.addExtraFileBtn = document.getElementById('add-extra-file-btn');
+        if (this.addExtraFileBtn) {
+            // Supprime tout handler précédent pour éviter le double ajout
+            const newBtn = this.addExtraFileBtn.cloneNode(true);
+            this.addExtraFileBtn.parentNode.replaceChild(newBtn, this.addExtraFileBtn);
+            this.addExtraFileBtn = newBtn;
+            this.addExtraFileBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addExtraFileInput();
+            });
+        }
+        // Vide la liste des fichiers à chaque affichage du formulaire
+        if (this.extraFilesList) {
+            this.extraFilesList.innerHTML = '';
+            this.extraFiles = [];
+        }
+    }
+
+    addExtraFileInput() {
+        const idx = this.extraFiles.length;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'input-group mb-2';
+        wrapper.style.maxWidth = '600px';
+        wrapper.innerHTML = `
+            <input type="file" class="form-control" data-extra-file-idx="${idx}">
+            <button type="button" class="btn btn-danger" data-idx="${idx}">Supprimer</button>
+        `;
+        this.extraFilesList.appendChild(wrapper);
+        this.extraFiles.push(null);
+        const input = wrapper.querySelector('input[type="file"]');
+        input.addEventListener('change', (e) => {
+            this.extraFiles[idx] = e.target.files[0] || null;
+        });
+        const removeBtn = wrapper.querySelector('button');
+        removeBtn.addEventListener('click', (event) => this.removeExtraFileInput(event));
+    }
+
+    removeExtraFileInput(event) {
+        const idx = parseInt(event.target.getAttribute('data-idx'));
+        this.extraFiles[idx] = null;
+        event.target.closest('.input-group').remove();
     }
 
     updateMethodList() {
@@ -53,7 +98,7 @@ export default class extends Controller {
         this.submitEdit();
     }
 
-    submit(event) {
+    async submit(event) {
         event.preventDefault();
         const form = event.target;
         const data = {
@@ -61,17 +106,30 @@ export default class extends Controller {
             method: form.method.value,
             params: form.params.value,
             goal: form.goal.value,
-            add_route: form.add_route && form.add_route.checked ? true : false,
-            add_docblock: form.add_docblock && form.add_docblock.checked ? true : false,
+            add_route: !!form.add_route.checked,
+            add_docblock: !!form.add_docblock.checked,
         };
         document.getElementById('route-link').innerHTML = '';
-        // Efface les logs UNIQUEMENT ici
         const logsFrame = document.getElementById('logs-frame');
         if (logsFrame) {
             logsFrame.innerHTML = '';
         }
-        // Affiche uniquement la première étape côté client pour retour immédiat
-        // Correction : n'affiche rien côté client, laisse le backend gérer tous les logs
+
+        // Lecture des fichiers annexes
+        const filesContent = [];
+        for (let file of this.extraFiles) {
+            if (file) {
+                const content = await file.text();
+                filesContent.push({
+                    name: file.name,
+                    content
+                });
+            }
+        }
+        if (filesContent.length > 0) {
+            data.extra_files = filesContent;
+        }
+
         fetch('/method-generator/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -92,17 +150,16 @@ export default class extends Controller {
             method: form.method.value,
             params: form.params.value,
             goal: form.goal.value,
-            add_route: form.add_route && form.add_route.checked ? true : false,
-            add_docblock: form.add_docblock && form.add_docblock.checked ? true : false,
+            add_route: !!form.add_route.checked,
+            add_docblock: !!form.add_docblock.checked,
             edit: true
         };
         document.getElementById('route-link').innerHTML = '';
-        // Efface les logs UNIQUEMENT ici
-        const logsElem = document.getElementById('logs');
-        if (logsElem) {
-            logsElem.textContent = '';
+        const logsFrame = document.getElementById('logs-frame');
+        if (logsFrame) {
+            logsFrame.innerHTML = '';
         }
-        this.log('Modification de la méthode...');
+        this.appendTurboStreamLog('Modification de la méthode...');
         fetch('/method-generator/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -111,39 +168,9 @@ export default class extends Controller {
             .then(r => r.json())
             .then(json => {
                 const jobId = json.jobId;
-                this.pollLogs(jobId);
+                this.pollTurboLogs(jobId);
             })
-            .catch(e => this.log('Erreur : ' + e));
-    }
-
-    pollLogs(jobId) {
-        const logsElem = document.getElementById('logs');
-        let lastLogs = '';
-        let pollCount = 0;
-        const maxPolls = 150;
-        const interval = setInterval(() => {
-            pollCount++;
-            fetch('/method-generator/log/' + jobId)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.logs !== lastLogs) {
-                        if (logsElem) {
-                            logsElem.textContent = data.logs;
-                            logsElem.scrollTop = logsElem.scrollHeight;
-                        }
-                        lastLogs = data.logs;
-                    }
-                    // Arrêt du polling si "Fin du process." ou "SUCCESS" ou "Erreur Ollama :" apparaît
-                    if (
-                        (data.logs || '').includes('Fin du process.') ||
-                        (data.logs || '').includes('SUCCESS') ||
-                        (data.logs || '').includes('Erreur Ollama :') ||
-                        pollCount >= maxPolls
-                    ) {
-                        clearInterval(interval);
-                    }
-                });
-        }, 2000);
+            .catch(e => this.appendTurboStreamLog('Erreur : ' + e));
     }
 
     pollTurboLogs(jobId) {
@@ -151,14 +178,15 @@ export default class extends Controller {
         let lastLogs = '';
         let pollCount = 0;
         const maxPolls = 150;
+        let stopped = false;
         const interval = setInterval(() => {
+            if (stopped) return;
             pollCount++;
             fetch('/method-generator/log/' + jobId)
                 .then(r => r.json())
                 .then(data => {
                     if (data.logs !== lastLogs) {
                         if (logsFrame) {
-                            // Ajoute les nouveaux turbo-streams à la frame
                             logsFrame.insertAdjacentHTML('beforeend', data.logs.replace(lastLogs, ''));
                             logsFrame.scrollTop = logsFrame.scrollHeight;
                         }
@@ -171,6 +199,7 @@ export default class extends Controller {
                         pollCount >= maxPolls
                     ) {
                         clearInterval(interval);
+                        stopped = true;
                     }
                 });
         }, 2000);

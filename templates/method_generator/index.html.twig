@@ -37,6 +37,13 @@
 					Ajouter un docblock explicatif à la méthode générée
 				</label>
 			</div>
+			<div class="mb-3">
+				<label class="form-label">Fichiers annexes à envoyer à l'IA</label>
+				<div id="extra-files-list"></div>
+				<button type="button" class="btn btn-secondary btn-sm mt-2" id="add-extra-file-btn" data-action="click->method-generator#addExtraFileInput">
+					Ajouter fichier
+				</button>
+			</div>
 			<div class="d-flex align-items-center gap-2 mb-3">
 				<button type="submit" class="btn btn-primary">Générer</button>
 				<button type="button" class="btn btn-warning" id="edit-method-btn">Modifier</button>
